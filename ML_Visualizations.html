@@ -1,0 +1,3817 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Visualizing Machine Learning and Neural Network Concepts</title>
+
+    <!-- Plotly (plots) -->
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+    <!-- math.js (least-squares via linear algebra) -->
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@11.11.2/lib/browser/math.min.js"></script>
+
+    <!-- MathJax (LaTeX in markdown cells) -->
+
+    <br />
+
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [
+            ["$", "$"],
+            ["\\(", "\\)"],
+          ],
+          displayMath: [["$$", "$$"]],
+        },
+        svg: { fontCache: "global" },
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+    <style>
+      :root {
+        --text: #111827;
+        --muted: #4b5563;
+        --border: #e5e7eb;
+        --bg: #ffffff;
+        --shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+      }
+      body {
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Helvetica,
+          Arial,
+          "Apple Color Emoji",
+          "Segoe UI Emoji";
+        color: var(--text);
+        margin: 18px;
+        background: #fafafa;
+      }
+      .card {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px;
+        box-shadow: var(--shadow);
+      }
+      .row {
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+      .col {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      label {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 600;
+        display: block;
+        margin-bottom: 4px;
+      }
+      input[type="number"],
+      select {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 10px;
+        font-size: 13px;
+        background: #fff;
+        color: var(--text);
+      }
+      input[type="range"] {
+        width: 100%;
+      }
+      button {
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text);
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      button.primary {
+        background: #2563eb;
+        color: #fff;
+        border-color: #2563eb;
+      }
+      button.warning {
+        background: #f59e0b;
+        color: #111827;
+        border-color: #f59e0b;
+      }
+      button:active {
+        transform: translateY(1px);
+      }
+      .title {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--text);
+        margin: 0 0 6px 0;
+        letter-spacing: -0.2px;
+      }
+      .subtitle {
+        margin: 0 0 14px 0;
+        color: var(--muted);
+        line-height: 1.35;
+      }
+      .pill {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: #fff;
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 700;
+        margin-right: 6px;
+      }
+      .eqn {
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", monospace;
+        font-size: 12.5px;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--text);
+        white-space: normal;
+      }
+      .muted {
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .val {
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 4px;
+        color: var(--text);
+      }
+      .section {
+        margin-top: 18px;
+      }
+      .plotBox {
+        min-width: 520px;
+      }
+      .plotBoxSmall {
+        min-width: 520px;
+      }
+      .controls {
+        width: 620px;
+        min-width: 320px;
+      }
+      .ctrlRow {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .ctrlRow > div {
+        flex: 1 1 210px;
+      }
+      .toggleBar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .toggleBtn {
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #fff;
+        font-weight: 700;
+        font-size: 12px;
+        color: var(--text);
+        cursor: pointer;
+        user-select: none;
+      }
+      .toggleBtn.active {
+        border-color: #2563eb;
+        outline: 2px solid rgba(37, 99, 235, 0.15);
+      }
+      .hr {
+        height: 1px;
+        background: var(--border);
+        margin: 12px 0;
+      }
+
+      .nn-grid-6 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(280px, 1fr));
+        gap: 14px;
+      }
+      .nn-grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(280px, 1fr));
+        gap: 14px;
+      }
+      @media (max-width: 1000px) {
+        .nn-grid-6,
+        .nn-grid-3 {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- ---- Notebook markdown (matched wording) ---- -->
+    <div class="section">
+      <h1 style="font-size: 45px; margin-left: 0px">
+        Visualizing Machine Learning and Neural Network Concepts
+      </h1>
+
+      <p style="font-size: 18px">
+        Interactive visualizations of core machine learning concepts, including
+        regression, gradient descent, logistic classification, classification
+        thresholds, evaluation metrics, sigmoid transformations, and
+        neural-network foundations.
+      </p>
+
+      <ul style="font-size: 18px">
+        <li>Polynomial regression (first-, second-, and third-degree)</li>
+        <li>
+          Two-predictor polynomial regression (with separate degrees for each
+          predictor)
+        </li>
+        <li>
+          Gradient descent for simple linear regression by showing how the slope
+          changes over iterations and how the loss changes
+        </li>
+        <li>
+          Logistic regression, classification thresholds, confusion matrices,
+          and ROC curves
+        </li>
+        <li>Sigmoid curves and probability-like transformations</li>
+        <li>
+          Shallow neural-network architecture, hidden-node transformations,
+          output-layer aggregation, and final prediction curves
+        </li>
+      </ul>
+
+      <p style="font-size: 18px">
+        The apps below are designed to be used as in-class demos. They are
+        interactive and allow you to:
+      </p>
+
+      <ul style="font-size: 18px">
+        <li>Add training data points</li>
+        <li>Fit and visualize regression curves/surfaces</li>
+        <li>Generate and visualize predictions</li>
+        <li>Understand how gradient descent updates parameters</li>
+        <li>
+          Explore how classification thresholds affect model predictions and
+          performance metrics
+        </li>
+        <li>
+          Explore how sigmoid functions convert inputs into values between 0 and
+          1
+        </li>
+        <li>
+          Manually adjust neural-network weights and biases to see how hidden
+          nodes and output layers shape nonlinear predictions
+        </li>
+      </ul>
+    </div>
+
+    <br />
+
+    <!-- ===================== Section 1 ===================== -->
+    <div class="section">
+      <h3 style="font-size: 27px; margin-top: 54px">
+        Demonstrate simple and polynomial regression by fitting and visualizing
+        a 2D curve that models house prices as a function of house size.
+      </h3>
+
+      <div class="card">
+        <div class="title">Interactive House Price Regression</div>
+        <div class="subtitle">
+          Add observed points (sqft, price). Choose 1st/2nd/3rd order. Predict
+          &amp; plot predicted points. Axes are fixed.
+        </div>
+
+        <div class="row">
+          <div class="controls col">
+            <div class="card" style="box-shadow: none">
+              <div class="muted" style="font-weight: 800">Inputs</div>
+
+              <div class="ctrlRow">
+                <div>
+                  <label>House Size (sqft)</label>
+                  <input
+                    id="hp_x_in"
+                    type="number"
+                    value="1800"
+                    min="0"
+                    max="10000"
+                    step="10"
+                  />
+                </div>
+                <div>
+                  <label>House Price ($)</label>
+                  <input
+                    id="hp_y_in"
+                    type="number"
+                    value="450000"
+                    min="0"
+                    max="5000000"
+                    step="1000"
+                  />
+                </div>
+              </div>
+
+              <div class="ctrlRow">
+                <div>
+                  <button id="hp_add_btn" class="primary" style="width: 100%">
+                    Add Data Point
+                  </button>
+                </div>
+                <div>
+                  <button id="hp_reset_all_btn" style="width: 100%">
+                    Reset (All)
+                  </button>
+                </div>
+              </div>
+
+              <div class="hr"></div>
+
+              <div class="muted" style="font-weight: 800">Model</div>
+              <div>
+                <label>Polynomial Degree</label>
+                <select id="hp_degree_dd">
+                  <option value="1">Degree 1 (First-order)</option>
+                  <option value="2">Degree 2 (Second-order)</option>
+                  <option value="3">Degree 3 (Third-order)</option>
+                </select>
+              </div>
+
+              <div id="hp_model_info" class="muted" style="margin-top: 8px">
+                Model: Not enough data
+              </div>
+              <div style="margin-top: 8px">
+                <span class="pill">Equation (current selection)</span>
+              </div>
+              <div id="hp_eqn" class="eqn">—</div>
+
+              <div class="hr"></div>
+
+              <div class="muted" style="font-weight: 800">Prediction</div>
+              <div class="ctrlRow">
+                <div>
+                  <label>Sqft to Predict</label>
+                  <input
+                    id="hp_pred_x"
+                    type="number"
+                    value="2200"
+                    min="0"
+                    max="10000"
+                    step="10"
+                  />
+                </div>
+                <div style="align-self: flex-end">
+                  <button
+                    id="hp_predict_btn"
+                    class="primary"
+                    style="width: 100%"
+                  >
+                    Predict &amp; Plot
+                  </button>
+                </div>
+                <div style="align-self: flex-end">
+                  <button id="hp_reset_pred_btn" style="width: 100%">
+                    Reset Predictions
+                  </button>
+                </div>
+              </div>
+
+              <div id="hp_pred_info" class="muted" style="margin-top: 8px">
+                Last predicted price: —
+              </div>
+            </div>
+          </div>
+
+          <div class="plotBox">
+            <div id="hp_plot" style="width: 100%; height: 520px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 style="font-size: 20px; margin-top: 18px">
+          Linear Regression with Polynomial Terms
+        </h3>
+        <div style="font-size: 16px; color: var(--muted); line-height: 1.5">
+          These models describe how the <b>observed outcome</b> differs from the
+          deterministic part of the model due to random noise: <br /><br />
+          $$y_i = \beta_0 + \beta_1 x_i + \varepsilon_i$$ $$y_i = \beta_0 +
+          \beta_1 x_i + \beta_2 x_i^2 + \varepsilon_i$$ $$y_i = \beta_0 +
+          \beta_1 x_i + \beta_2 x_i^2 + \beta_3 x_i^3 + \varepsilon_i$$
+        </div>
+      </div>
+    </div>
+
+    <br />
+
+    <!-- ===================== Section 2 ===================== -->
+    <div class="section">
+      <h3 style="font-size: 27px; margin-top: 54px">
+        Demonstrate two-predictor polynomial regression by fitting and
+        visualizing a 3D surface that models house prices as a function of house
+        size and number of bedrooms.
+      </h3>
+
+      <div class="card">
+        <div class="title">Interactive 3D House Price Regression</div>
+        <div class="subtitle">
+          Add observed points (sqft, bedrooms, price). Choose order for each
+          predictor (first/second/third). View the fitted surface in 3D and its
+          2D projection. No interaction terms.
+        </div>
+
+        <div class="row">
+          <div class="controls col">
+            <div class="card" style="box-shadow: none">
+              <div class="muted" style="font-weight: 800">Inputs</div>
+
+              <div class="ctrlRow">
+                <div>
+                  <label>House Size (sqft)</label>
+                  <input
+                    id="hs_sqft_in"
+                    type="number"
+                    value="1800"
+                    min="0"
+                    max="10000"
+                    step="10"
+                  />
+                </div>
+                <div>
+                  <label>Bedrooms</label>
+                  <input
+                    id="hs_bed_in"
+                    type="number"
+                    value="3"
+                    min="0"
+                    max="10"
+                    step="1"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label>House Price ($)</label>
+                <input
+                  id="hs_price_in"
+                  type="number"
+                  value="450000"
+                  min="0"
+                  max="5000000"
+                  step="1000"
+                />
+              </div>
+
+              <div class="ctrlRow">
+                <div>
+                  <button id="hs_add_btn" class="primary" style="width: 100%">
+                    Add Data Point
+                  </button>
+                </div>
+                <div>
+                  <button id="hs_reset_all_btn" style="width: 100%">
+                    Reset (All)
+                  </button>
+                </div>
+              </div>
+
+              <div class="hr"></div>
+
+              <div class="muted" style="font-weight: 800">Model</div>
+
+              <div class="ctrlRow">
+                <div>
+                  <label>Sqft Order</label>
+                  <select id="hs_deg_sqft">
+                    <option value="1">First-order</option>
+                    <option value="2">Second-order</option>
+                    <option value="3">Third-order</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Bedroom Order</label>
+                  <select id="hs_deg_bed">
+                    <option value="1">First-order</option>
+                    <option value="2">Second-order</option>
+                    <option value="3">Third-order</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style="margin-top: 6px">
+                <label>2D Projection</label>
+                <div class="toggleBar">
+                  <div id="hs_proj_sqft" class="toggleBtn active">
+                    Project onto (Sqft, Price)
+                  </div>
+                  <div id="hs_proj_bed" class="toggleBtn">
+                    Project onto (Bedrooms, Price)
+                  </div>
+                </div>
+              </div>
+
+              <div id="hs_model_info" class="muted" style="margin-top: 10px">
+                Model: Not enough data
+              </div>
+              <div style="margin-top: 8px">
+                <span class="pill">Equation</span>
+              </div>
+              <div id="hs_eqn" class="eqn">—</div>
+
+              <div class="hr"></div>
+
+              <div class="muted" style="font-weight: 800">Prediction</div>
+
+              <div class="ctrlRow">
+                <div>
+                  <label>Sqft to Predict</label>
+                  <input
+                    id="hs_pred_sqft"
+                    type="number"
+                    value="2200"
+                    min="0"
+                    max="10000"
+                    step="10"
+                  />
+                </div>
+                <div>
+                  <label>Bedrooms to Predict</label>
+                  <input
+                    id="hs_pred_bed"
+                    type="number"
+                    value="4"
+                    min="0"
+                    max="10"
+                    step="1"
+                  />
+                </div>
+              </div>
+
+              <div class="ctrlRow">
+                <div>
+                  <button
+                    id="hs_predict_btn"
+                    class="primary"
+                    style="width: 100%"
+                  >
+                    Predict &amp; Plot
+                  </button>
+                </div>
+                <div>
+                  <button id="hs_reset_pred_btn" style="width: 100%">
+                    Reset Predictions
+                  </button>
+                </div>
+              </div>
+
+              <div id="hs_pred_info" class="muted" style="margin-top: 8px">
+                Last predicted price: —
+              </div>
+            </div>
+          </div>
+
+          <div class="col plotBoxSmall" style="gap: 10px">
+            <div id="hs_plot3d" style="width: 100%; height: 520px"></div>
+            <div id="hs_plot2d" style="width: 100%; height: 360px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 style="font-size: 20px; margin-top: 18px">
+          Linear Regression with Two Independent Variables and Polynomial Terms
+        </h3>
+        <div style="font-size: 16px; color: var(--muted); line-height: 1.5">
+          Let $x_1$ and $x_2$ be two independent variables. A combined
+          polynomial model (up to third-order for each predictor) can be written
+          as:
+          <br /><br />
+          $$y_i = \beta_0 + \sum_{j=1}^{d_1} \beta_j \, x_{1i}^{\,j} +
+          \sum_{k=1}^{d_2} \gamma_k \, x_{2i}^{\,k} + \varepsilon_i$$
+          <br />
+          where $d_1, d_2 \in \{1,2,3\}$ (first-/second-/third-order), and
+          $\varepsilon_i$ is the random error term.
+        </div>
+      </div>
+    </div>
+
+    <br />
+
+    <!-- ===================== Section 3 ===================== -->
+    <div class="section">
+      <h3 style="font-size: 27px; margin-top: 54px">
+        Demonstrate gradient descent for simple linear regression (y = a + bx)
+        by showing how the slope changes over iterations and how the loss
+        changes.
+      </h3>
+
+      <div class="card">
+        <div class="title">Gradient Descent on Slope (b)</div>
+        <div class="subtitle">Loss surface fixed on b ∈ [-100, 100]</div>
+
+        <div class="row">
+          <div class="controls col">
+            <div class="card" style="box-shadow: none">
+              <div id="gd_a_lbl" class="val">Intercept: 0.0</div>
+              <input
+                id="gd_intercept"
+                type="range"
+                min="0"
+                max="500"
+                step="5"
+                value="0"
+              />
+
+              <div id="gd_b0_lbl" class="val" style="margin-top: 8px">
+                Initial slope (b₀): 0.0
+              </div>
+              <input
+                id="gd_b0"
+                type="range"
+                min="-100"
+                max="100"
+                step="1"
+                value="0"
+              />
+
+              <div id="gd_lr_lbl" class="val" style="margin-top: 8px">
+                Learning rate: 1.00e-06
+              </div>
+              <!-- emulate FloatLogSlider range (10^-6.523 to 10^-5.523) -->
+              <input
+                id="gd_lr"
+                type="range"
+                min="-6.523"
+                max="-5.523"
+                step="0.001"
+                value="-6.000"
+              />
+
+              <div id="gd_step_lbl" class="val" style="margin-top: 8px">
+                Step (t): 0
+              </div>
+              <input
+                id="gd_step"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value="0"
+              />
+
+              <button id="gd_reset" class="warning" style="margin-top: 10px">
+                Reset (t=0)
+              </button>
+
+              <div style="margin-top: 10px">
+                <span id="gd_pill_b" class="pill">bₜ = 0.00</span>
+                <span id="gd_pill_sse" class="pill">SSE = 0</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="plotBox">
+            <div id="gd_plot_left" style="width: 100%; height: 420px"></div>
+            <div id="gd_plot_right" style="width: 100%; height: 420px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 style="font-size: 20px; margin-top: 18px">
+          Sum of Squared Errors (SSE)
+        </h3>
+        <div style="font-size: 16px; color: var(--muted); line-height: 1.5">
+          For simple linear regression
+          <br /><br />
+          $$\hat{y}_i = a + b x_i$$
+          <br />
+          the <b>Sum of Squared Errors</b> is: <br /><br />
+          $$\mathrm{SSE}(a,b) = \sum_{i=1}^{n} \left(\hat{y}_i - y_i\right)^2 =
+          \sum_{i=1}^{n} \left(a + b x_i - y_i\right)^2$$
+        </div>
+
+        <h3 style="font-size: 20px; margin-top: 18px">
+          Gradient Descent update (slope)
+        </h3>
+        <div style="font-size: 16px; color: var(--muted); line-height: 1.5">
+          Holding $a$ fixed, gradient descent updates $b$ by:
+          <br /><br />
+          $$b^{(t+1)} = b^{(t)} - \eta \, \frac{\partial
+          \mathrm{SSE}(a,b)}{\partial b}$$
+          <br />
+          where $\eta$ is the learning rate.
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== Section 4 ===================== -->
+    <div class="section">
+      <h3 style="font-size: 27px; margin-top: 54px">
+        Interactive Logistic Regression vs. Linear Probability Model
+      </h3>
+
+      <div class="card">
+        <div class="title">
+          Interactive Logistic Regression vs Linear Probability Model
+        </div>
+        <div class="subtitle">
+          Add observed points (ad spend, clicked ad), where 0 means the ad was
+          not clicked and 1 means the ad was clicked. The left plot shows
+          logistic regression and the right plot shows a linear probability
+          model to compare how each handles a binary outcome.
+        </div>
+
+        <div class="row">
+          <div class="controls col">
+            <div class="card" style="box-shadow: none">
+              <div class="muted" style="font-weight: 800">Inputs</div>
+
+              <div class="ctrlRow">
+                <div>
+                  <label>Ad Spend ($)</label>
+                  <input
+                    id="lg_x_in"
+                    type="number"
+                    value="1500"
+                    min="0"
+                    max="10000"
+                    step="50"
+                  />
+                </div>
+                <div>
+                  <label>Clicked Ad</label>
+                  <select id="lg_y_in">
+                    <option value="0">0 (Not Clicked)</option>
+                    <option value="1" selected>1 (Clicked)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="ctrlRow">
+                <div>
+                  <button id="lg_add_btn" class="primary" style="width: 100%">
+                    Add Data Point
+                  </button>
+                </div>
+                <div>
+                  <button id="lg_reset_all_btn" style="width: 100%">
+                    Reset (All)
+                  </button>
+                </div>
+              </div>
+
+              <div class="hr"></div>
+
+              <div class="muted" style="font-weight: 800">Model</div>
+              <div id="lg_model_info" class="muted" style="margin-top: 8px">
+                Add at least 3 points, with both 0s and 1s and at least two
+                different Ad Spend values, to fit logistic regression.
+              </div>
+              <div style="margin-top: 8px">
+                <span class="pill">Logistic Equation</span>
+              </div>
+              <div id="lg_eqn_logit" class="eqn">—</div>
+              <div style="margin-top: 8px">
+                <span class="pill">Linear Probability Equation</span>
+              </div>
+              <div id="lg_eqn_linear" class="eqn">—</div>
+
+              <div class="hr"></div>
+
+              <div class="muted" style="font-weight: 800">Prediction</div>
+              <div class="ctrlRow">
+                <div>
+                  <label>Spend to Predict</label>
+                  <input
+                    id="lg_pred_x"
+                    type="number"
+                    value="2500"
+                    min="0"
+                    max="10000"
+                    step="50"
+                  />
+                </div>
+                <div style="align-self: flex-end">
+                  <button
+                    id="lg_predict_btn"
+                    class="primary"
+                    style="width: 100%"
+                  >
+                    Predict &amp; Plot
+                  </button>
+                </div>
+                <div style="align-self: flex-end">
+                  <button id="lg_reset_pred_btn" style="width: 100%">
+                    Reset Predictions
+                  </button>
+                </div>
+              </div>
+
+              <div
+                id="lg_pred_box"
+                class="card"
+                style="box-shadow: none; margin-top: 12px"
+              >
+                <div class="muted" style="font-weight: 800; margin-bottom: 8px">
+                  Predicted Values
+                </div>
+                <div
+                  id="lg_pred_info"
+                  style="
+                    font-size: 15px;
+                    line-height: 1.5;
+                    font-weight: 700;
+                    color: var(--text);
+                  "
+                >
+                  No predictions yet.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col plotBoxSmall" style="gap: 10px">
+            <div id="lg_plot_left" style="width: 100%; height: 420px"></div>
+            <div id="lg_plot_right" style="width: 100%; height: 420px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size: 16px; color: var(--muted); line-height: 1.5">
+      <p>
+        This interactive app demonstrates how <b>logistic regression</b> and a
+        <b>linear probability model (LPM)</b> behave when the dependent variable
+        is binary. In this example, the outcome is whether a customer
+        <b>clicked an advertisement</b> (<code>1 = clicked</code>,
+        <code>0 = not clicked</code>) based on <b>ad spend</b>.
+      </p>
+
+      <h4 style="font-size: 20px; margin-top: 18px; color: var(--text)">
+        Logistic Regression
+      </h4>
+      <p>
+        Logistic regression models the probability that the outcome equals 1:
+      </p>
+      $$ P(\text{Clicked}=1 \mid X) = \frac{1}{1 + e^{-(\beta_0 + \beta_1 X)}}
+      $$
+
+      <h4 style="font-size: 20px; margin-top: 18px; color: var(--text)">
+        Linear Probability Model
+      </h4>
+      <p>
+        The linear probability model applies ordinary least squares regression
+        to a binary dependent variable:
+      </p>
+      $$ \hat{Y} = \beta_0 + \beta_1 X $$
+    </div>
+
+    <br />
+
+    <!-- ===================== Section 5 ===================== -->
+    <div class="section">
+      <h3 style="font-size: 27px; margin-top: 54px">
+        Interactive Logistic Regression Threshold App
+      </h3>
+
+      <div class="card">
+        <div class="title">Interactive Logistic Regression Threshold App</div>
+        <div class="subtitle">
+          Move the slider to change the classification threshold. The first plot
+          shows the logistic regression curve, observed click labels on 0/1
+          lines, and vertical dashed lines connecting each observed outcome to
+          its predicted probability. The confusion matrix, summary metrics,
+          classification report, and ROC points update as the threshold changes.
+          Use the button below to generate the full ROC curve separately.
+        </div>
+
+        <div
+          class="card"
+          style="box-shadow: none; margin-bottom: 16px; overflow-x: auto"
+        >
+          <div class="muted" style="font-weight: 800; margin-bottom: 8px">
+            Model Data
+          </div>
+          <div id="lt_data_table"></div>
+        </div>
+
+        <div class="card" style="box-shadow: none; margin-bottom: 16px">
+          <div id="lt_threshold_lbl" class="val" style="font-size: 18px">
+            Threshold: 0.50
+          </div>
+          <input
+            id="lt_threshold"
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value="0.50"
+            style="width: 900px; max-width: 100%"
+          />
+        </div>
+
+        <div class="col" style="gap: 14px">
+          <div id="lt_curve_plot" style="width: 100%; height: 840px"></div>
+          <div
+            id="lt_cm_plot"
+            style="width: 50%; min-width: 520px; height: 420px"
+          ></div>
+          <div class="card" style="box-shadow: none">
+            <div class="muted" style="font-weight: 800; margin-bottom: 8px">
+              Summary Metrics and Classification Report
+            </div>
+            <div
+              id="lt_metrics_box"
+              style="font-size: 15px; line-height: 1.55; color: var(--text)"
+            ></div>
+          </div>
+          <div
+            id="lt_roc_points_plot"
+            style="width: 50%; min-width: 520px; height: 520px"
+          ></div>
+        </div>
+
+        <div style="margin-top: 16px">
+          <button
+            id="lt_full_roc_btn"
+            class="primary"
+            style="width: 270px; height: 54px; font-size: 15px"
+          >
+            Plot Full ROC Curve
+          </button>
+        </div>
+        <div
+          id="lt_full_roc_plot"
+          style="width: 50%; min-width: 520px; height: 560px; margin-top: 12px"
+        ></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3 style="font-size: 20px; margin-top: 18px">
+        Logistic Regression Threshold Explorer
+      </h3>
+      <div style="font-size: 16px; color: var(--muted); line-height: 1.5">
+        <p>
+          This interactive app shows how changing the classification threshold
+          affects predictions in a logistic regression model.
+        </p>
+        <ul>
+          <li>
+            The first plot shows the logistic curve, actual outcomes, predicted
+            probabilities, and the current threshold.
+          </li>
+          <li>
+            The confusion matrix and performance metrics update automatically as
+            the threshold changes.
+          </li>
+          <li>
+            The ROC panel gradually adds the ROC points corresponding to
+            thresholds you have visited.
+          </li>
+          <li>
+            Clicking <b>"Plot Full ROC Curve"</b> displays the complete ROC
+            curve and AUC below.
+          </li>
+        </ul>
+        <p>
+          Use the slider to observe the trade-off between sensitivity,
+          specificity, and false positive rate.
+        </p>
+      </div>
+    </div>
+
+    <!-- ===================== Section 6 ===================== -->
+    <div class="section">
+      <h3 style="font-size: 27px; margin-top: 54px">
+        Sigmoid Function Explorer
+      </h3>
+
+      <div class="card">
+        <div class="title">Sigmoid Function Explorer</div>
+        <div class="subtitle">
+          Use the slider to change the x-axis range. Enter an x value to
+          calculate its sigmoid value.
+        </div>
+
+        <div class="row">
+          <div class="controls col">
+            <div class="card" style="box-shadow: none">
+              <div class="muted" style="font-weight: 800">Inputs</div>
+              <div id="sg_range_lbl" class="val">x range: [-10.0, 10.0]</div>
+              <div class="ctrlRow">
+                <div>
+                  <label>Minimum x</label>
+                  <input
+                    id="sg_x_min"
+                    type="range"
+                    min="-20"
+                    max="19.5"
+                    step="0.5"
+                    value="-10"
+                  />
+                </div>
+                <div>
+                  <label>Maximum x</label>
+                  <input
+                    id="sg_x_max"
+                    type="range"
+                    min="-19.5"
+                    max="20"
+                    step="0.5"
+                    value="10"
+                  />
+                </div>
+              </div>
+              <div class="ctrlRow">
+                <div>
+                  <label>x value</label>
+                  <input
+                    id="sg_x_value"
+                    type="number"
+                    value="0"
+                    min="-20"
+                    max="20"
+                    step="0.1"
+                  />
+                </div>
+              </div>
+              <div
+                id="sg_calc_html"
+                style="font-size: 16px; margin-top: 8px"
+              ></div>
+            </div>
+          </div>
+          <div class="plotBoxSmall">
+            <div id="sg_plot" style="width: 100%; height: 450px"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 style="font-size: 20px; margin-top: 18px">
+          Sigmoid Function Explorer
+        </h3>
+        <div style="font-size: 16px; color: var(--muted); line-height: 1.5">
+          Interactive app visualizing the <b>sigmoid (logistic) function</b>:
+          <br /><br />
+          $$ \sigma(x) = \frac{1}{1 + e^{-x}} $$
+        </div>
+      </div>
+    </div>
+
+    <br />
+
+    <!-- ===================== Section 7 ===================== -->
+    <div class="section">
+      <h3 style="font-size: 27px; margin-top: 54px">
+        Interactive Neural Network Visualization
+      </h3>
+
+      <div class="card">
+        <div class="title">Interactive Neural Network Visualization</div>
+        <div class="subtitle">
+          Business context: moderate ad frequency is most effective. Very low
+          frequency creates little awareness, while very high frequency may
+          create customer fatigue.
+        </div>
+
+        <div class="row">
+          <div class="controls col">
+            <div class="card" style="box-shadow: none">
+              <div class="muted" style="font-weight: 800">
+                Hidden Layer Parameters
+              </div>
+              <div id="nn_W1_lbl" class="val">W1: 25.00</div>
+              <input
+                id="nn_W1"
+                type="range"
+                min="-50"
+                max="50"
+                step="0.1"
+                value="25"
+              />
+              <div id="nn_b1_lbl" class="val">b1: -8.75</div>
+              <input
+                id="nn_b1"
+                type="range"
+                min="-30"
+                max="30"
+                step="0.05"
+                value="-8.75"
+              />
+              <div id="nn_W2_lbl" class="val">W2: 25.00</div>
+              <input
+                id="nn_W2"
+                type="range"
+                min="-50"
+                max="50"
+                step="0.1"
+                value="25"
+              />
+              <div id="nn_b2_lbl" class="val">b2: -16.25</div>
+              <input
+                id="nn_b2"
+                type="range"
+                min="-30"
+                max="30"
+                step="0.05"
+                value="-16.25"
+              />
+
+              <div class="hr"></div>
+
+              <div class="muted" style="font-weight: 800">
+                Output Layer Parameters
+              </div>
+              <div id="nn_W3_lbl" class="val">W3: 8.00</div>
+              <input
+                id="nn_W3"
+                type="range"
+                min="-20"
+                max="20"
+                step="0.1"
+                value="8"
+              />
+              <div id="nn_W4_lbl" class="val">W4: -8.00</div>
+              <input
+                id="nn_W4"
+                type="range"
+                min="-20"
+                max="20"
+                step="0.1"
+                value="-8"
+              />
+              <div id="nn_b3_lbl" class="val">b3: -4.00</div>
+              <input
+                id="nn_b3"
+                type="range"
+                min="-20"
+                max="20"
+                step="0.05"
+                value="-4"
+              />
+
+              <div class="hr"></div>
+
+              <div class="muted" style="font-weight: 800">Display Options</div>
+              <label
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  font-size: 14px;
+                  color: var(--text);
+                  font-weight: 700;
+                  margin-top: 8px;
+                "
+              >
+                <input id="nn_show_threshold" type="checkbox" checked />
+                Show 0.5 threshold
+              </label>
+            </div>
+          </div>
+
+          <div class="col plotBoxSmall" style="gap: 22px">
+            <div class="card" style="box-shadow: none">
+              <div id="nn_arch" style="width: 100%; min-height: 480px"></div>
+            </div>
+            <div id="nn_squiggle_plot" style="width: 100%; height: 600px"></div>
+          </div>
+        </div>
+
+        <div class="section" style="margin-top: 26px">
+          <div class="title">Hidden Node Transformations and Scaling</div>
+          <div class="subtitle">
+            Each hidden node first applies a linear transformation, then sigmoid
+            activation, and then output-weight scaling.
+          </div>
+          <div class="nn-grid-6">
+            <div id="nn_hz1" style="height: 480px"></div>
+            <div id="nn_hh1" style="height: 480px"></div>
+            <div id="nn_hs1" style="height: 480px"></div>
+            <div id="nn_hz2" style="height: 480px"></div>
+            <div id="nn_hh2" style="height: 480px"></div>
+            <div id="nn_hs2" style="height: 480px"></div>
+          </div>
+        </div>
+
+        <div class="section" style="margin-top: 42px">
+          <div class="title">
+            Output Layer: Summation, Bias Shift, and Final Sigmoid
+          </div>
+          <div class="subtitle">
+            First, the scaled hidden-node outputs are added. Then the output
+            bias is added. Finally, sigmoid converts the result into a value
+            between 0 and 1.
+          </div>
+          <div class="nn-grid-3">
+            <div id="nn_out_sum" style="height: 630px"></div>
+            <div id="nn_out_bias" style="height: 630px"></div>
+            <div id="nn_out_final" style="height: 630px"></div>
+          </div>
+          <div
+            id="nn_equations"
+            style="
+              font-size: 15px;
+              margin-top: 10px;
+              color: var(--text);
+              line-height: 1.5;
+            "
+          ></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3 style="font-size: 20px; margin-top: 18px">ANN Visualization</h3>
+        <div style="font-size: 16px; color: var(--muted); line-height: 1.5">
+          <p>
+            This notebook provides an interactive visualization of a small
+            neural network to illustrate how inputs are transformed through
+            hidden layers and combined to produce a nonlinear prediction. By
+            adjusting weights and biases manually, it helps build intuition
+            about how neural networks construct flexible “squiggle” curves and
+            map inputs to probability-like outputs.
+          </p>
+        </div>
+
+        <h3 style="font-size: 20px; margin-top: 18px">
+          How the Neural Network Builds the Final Prediction
+        </h3>
+        <div style="font-size: 16px; color: var(--muted); line-height: 1.5">
+          <p>
+            This GUI illustrates the forward pass of a small neural network. The
+            sliders manually control the weights and biases, allowing a user to
+            see how hidden-node transformations are combined to create a
+            nonlinear prediction curve.
+          </p>
+
+          <p>
+            This neural network transforms the input (<i>ad frequency</i>, (x))
+            through a sequence of steps to produce the final prediction.
+          </p>
+
+          <h4 style="font-size: 18px; margin-top: 16px; color: var(--text)">
+            Step 1: Linear Transformation at Hidden Nodes
+          </h4>
+          <p>Each hidden node applies a linear transformation:</p>
+          $$z_1 = W_1 x + b_1$$ $$z_2 = W_2 x + b_2$$
+          <p>
+            These transformations shift and scale the input differently for each
+            node.
+          </p>
+
+          <h4 style="font-size: 18px; margin-top: 16px; color: var(--text)">
+            Step 2: Nonlinear Activation (Sigmoid)
+          </h4>
+          <p>The transformed values pass through the sigmoid function:</p>
+          $$h_1 = \sigma(z_1)$$ $$h_2 = \sigma(z_2)$$
+          <p>
+            This introduces nonlinearity, allowing the model to capture curved
+            relationships.
+          </p>
+
+          <h4 style="font-size: 18px; margin-top: 16px; color: var(--text)">
+            Step 3: Scaling by Output Weights
+          </h4>
+          <p>Each hidden node output is scaled:</p>
+          $$W_3 h_1$$ $$W_4 h_2$$
+          <p>
+            These weights determine the relative influence of each hidden node.
+          </p>
+
+          <h4 style="font-size: 18px; margin-top: 16px; color: var(--text)">
+            Step 4: Summation
+          </h4>
+          <p>The scaled outputs are combined:</p>
+          $$W_3 h_1 + W_4 h_2$$
+          <p>This aggregates the learned nonlinear patterns.</p>
+
+          <h4 style="font-size: 18px; margin-top: 16px; color: var(--text)">
+            Step 5: Output Bias Adjustment
+          </h4>
+          <p>A bias term shifts the combined result:</p>
+          $$W_3 h_1 + W_4 h_2 + b_3$$
+          <p>This allows flexibility in the overall level of the prediction.</p>
+
+          <h4 style="font-size: 18px; margin-top: 16px; color: var(--text)">
+            Step 6: Final Sigmoid Output
+          </h4>
+          <p>The final output is obtained using the sigmoid function:</p>
+          $$\hat{y} = \sigma(W_3 h_1 + W_4 h_2 + b_3)$$
+          <p>This ensures the prediction lies between 0 and 1.</p>
+
+          <h4 style="font-size: 18px; margin-top: 16px; color: var(--text)">
+            Interpretation
+          </h4>
+          <ul>
+            <li>Hidden nodes create nonlinear transformations of the input.</li>
+            <li>The output layer combines these transformations.</li>
+            <li>The final sigmoid produces a probability-like prediction.</li>
+          </ul>
+          <p>This structure allows the model to capture patterns such as:</p>
+          <ul>
+            <li>low effectiveness at very low ad frequency,</li>
+            <li>higher effectiveness at moderate levels,</li>
+            <li>and potential decline at very high frequency.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== Acknowledgments ===================== -->
+    <div class="section" style="margin-top: 60px; margin-bottom: 30px">
+      <div class="card">
+        <h3 style="font-size: 24px; margin-top: 0">
+          Acknowledgments and References
+        </h3>
+
+        <div style="font-size: 15px; color: var(--muted); line-height: 1.6">
+          <p>
+            Some of the concepts and pedagogical approaches used in these
+            interactive machine-learning visualizations were informed by
+            educational resources from
+            <b>StatQuest with Josh Starmer</b>, particularly its
+            machine-learning and neural-network instructional videos.
+          </p>
+
+          <p>
+            The neural-network visualization was informed in part by the
+            StatQuest video
+            <i>The Essential Main Ideas of Neural Networks</i>:
+            <a
+              href="https://www.youtube.com/watch?v=CqOfi41LfDw&list=PLblh5JKOoLUICTaGLRoHQDuF_7q2GfuJF&index=77"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              View the referenced StatQuest video on YouTube </a
+            >.
+          </p>
+
+          <p>
+            The interactive applications, source code, numerical examples,
+            plots, interface design, and accompanying explanations on this site
+            were independently developed for educational purposes. No StatQuest
+            video footage, screenshots, illustrations, animations, or source
+            code are reproduced in these applications.
+          </p>
+
+          <p>
+            StatQuest and Josh Starmer are acknowledged as educational sources
+            that helped inform the understanding and presentation of some of the
+            underlying machine-learning concepts. All trademarks, copyrighted
+            materials, and other intellectual property associated with StatQuest
+            remain the property of their respective owners.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      /* =========================
+   Shared utilities
+========================= */
+      function clamp(v, lo, hi) {
+        return Math.min(hi, Math.max(lo, v));
+      }
+
+      function fmtCoef(v) {
+        const av = Math.abs(v);
+        if (av !== 0 && (av >= 1e6 || av < 1e-3)) return v.toExponential(3);
+        return v.toFixed(4);
+      }
+      function eqnPretty1D(coefsAsc) {
+        // Price = a0 + a1*X + a2*X^2 + ...
+        let html = `<span>Price = ${fmtCoef(coefsAsc[0])}</span>`;
+        for (let p = 1; p < coefsAsc.length; p++) {
+          const c = coefsAsc[p];
+          const sign = c >= 0 ? " + " : " \u2212 ";
+          const absC = Math.abs(c);
+          const term = p === 1 ? "\u00B7X" : `\u00B7X<sup>${p}</sup>`;
+          html += `<span>${sign}${fmtCoef(absC)}${term}</span>`;
+        }
+        return html;
+      }
+
+      function buildDesign1D(xs, degree) {
+        // columns: [1, x, x^2, ... x^d]
+        const X = [];
+        for (const x of xs) {
+          const row = [1];
+          for (let p = 1; p <= degree; p++) row.push(Math.pow(x, p));
+          X.push(row);
+        }
+        return X;
+      }
+
+      function leastSquares(X, y) {
+        // Solve min ||X b - y|| using normal equations with math.js
+        // b = (X^T X)^(-1) X^T y
+        const XT = math.transpose(X);
+        const XTX = math.multiply(XT, X);
+        const XTy = math.multiply(XT, y);
+        // use solve (more stable than explicit inverse)
+        const b = math.lusolve(XTX, XTy);
+        // b is column vector matrix
+        return b.map((r) => r[0]);
+      }
+
+      function predict1D(coefs, x) {
+        let y = 0;
+        for (let p = 0; p < coefs.length; p++) y += coefs[p] * Math.pow(x, p);
+        return y;
+      }
+
+      function safePlotlyNew(divId, data, layout, config) {
+        Plotly.react(
+          divId,
+          data,
+          layout,
+          config || { displayModeBar: false, responsive: true },
+        );
+      }
+
+      /* =========================
+   App 1: House price 2D polynomial regression
+========================= */
+      (function () {
+        const X_RANGE = [0, 10000],
+          Y_RANGE = [0, 5000000];
+        const observed = []; // {x,y}
+        const predicted = []; // {x,y}
+
+        const el = {
+          xIn: document.getElementById("hp_x_in"),
+          yIn: document.getElementById("hp_y_in"),
+          addBtn: document.getElementById("hp_add_btn"),
+          resetAllBtn: document.getElementById("hp_reset_all_btn"),
+          degree: document.getElementById("hp_degree_dd"),
+          predX: document.getElementById("hp_pred_x"),
+          predictBtn: document.getElementById("hp_predict_btn"),
+          resetPredBtn: document.getElementById("hp_reset_pred_btn"),
+          modelInfo: document.getElementById("hp_model_info"),
+          eqn: document.getElementById("hp_eqn"),
+          predInfo: document.getElementById("hp_pred_info"),
+          plotDiv: "hp_plot",
+        };
+
+        function degreeAllowed(deg) {
+          return observed.length >= deg + 2;
+        }
+
+        function updateDegreeOptions() {
+          const n = observed.length;
+          const opts = [
+            { label: "Degree 1 (First-order)", v: 1 },
+            { label: "Degree 2 (Second-order)", v: 2 },
+            { label: "Degree 3 (Third-order)", v: 3 },
+          ];
+
+          // enable/disable to mimic notebook behavior
+          if (n < 2) {
+            el.degree.disabled = true;
+            el.degree.value = "1";
+            return;
+          }
+          const maxAllowed = Math.max(0, n - 2);
+          const allowed = opts
+            .filter((o) => o.v <= maxAllowed)
+            .map((o) => String(o.v));
+          el.degree.disabled = allowed.length === 0;
+          if (allowed.length === 0) {
+            el.degree.value = "1";
+          } else {
+            if (!allowed.includes(el.degree.value)) {
+              el.degree.value = allowed[allowed.length - 1];
+              predicted.length = 0;
+              el.predInfo.textContent = "Last predicted price: —";
+            }
+          }
+        }
+
+        function fit() {
+          const deg = parseInt(el.degree.value, 10);
+          if (!degreeAllowed(deg)) return null;
+          const xs = observed.map((p) => p.x);
+          const ys = observed.map((p) => p.y);
+          const X = buildDesign1D(xs, deg);
+          const coefs = leastSquares(X, ys);
+          return { deg, coefs };
+        }
+
+        function render() {
+          updateDegreeOptions();
+
+          const deg = parseInt(el.degree.value, 10);
+          const fitted = fit();
+
+          // traces
+          const traces = [];
+
+          if (observed.length) {
+            traces.push({
+              x: observed.map((p) => p.x),
+              y: observed.map((p) => p.y),
+              mode: "markers",
+              name: "Observed (Actual)",
+              marker: { size: 8 },
+            });
+          }
+
+          if (predicted.length) {
+            traces.push({
+              x: predicted.map((p) => p.x),
+              y: predicted.map((p) => p.y),
+              mode: "markers",
+              name: "Predicted (Ŷ)",
+              marker: {
+                size: 9,
+                symbol: "diamond",
+                color: "red",
+                line: { width: 2, color: "#111827" },
+              },
+            });
+          }
+
+          if (!fitted) {
+            el.modelInfo.textContent = "Model: Not enough data";
+            el.eqn.textContent = "—";
+          } else {
+            el.modelInfo.textContent = `Model: Degree ${fitted.deg} polynomial`;
+            el.eqn.innerHTML = eqnPretty1D(fitted.coefs);
+
+            // fitted curve
+            const xsFit = [];
+            const ysFit = [];
+            const n = 220;
+            for (let i = 0; i < n; i++) {
+              const x = X_RANGE[0] + (X_RANGE[1] - X_RANGE[0]) * (i / (n - 1));
+              xsFit.push(x);
+              ysFit.push(predict1D(fitted.coefs, x));
+            }
+            traces.push({
+              x: xsFit,
+              y: ysFit,
+              mode: "lines",
+              name: "Fitted",
+              line: { width: 2 },
+            });
+
+            // fitted at observed x (open circles)
+            if (observed.length) {
+              const xsObs = observed.map((p) => p.x);
+              const yHatObs = xsObs.map((x) => predict1D(fitted.coefs, x));
+              traces.push({
+                x: xsObs,
+                y: yHatObs,
+                mode: "markers",
+                name: "Fitted at Observed X (ŷ)",
+                marker: {
+                  size: 7,
+                  symbol: "circle-open",
+                  color: "#111827",
+                  line: { width: 2, color: "#111827" },
+                },
+              });
+            }
+          }
+
+          const layout = {
+            margin: { l: 60, r: 20, t: 30, b: 50 },
+            xaxis: {
+              title: "House Size (sqft)",
+              range: X_RANGE,
+              fixedrange: true,
+            },
+            yaxis: {
+              title: "House Price ($)",
+              range: Y_RANGE,
+              fixedrange: true,
+            },
+            legend: { orientation: "v" },
+          };
+
+          safePlotlyNew(el.plotDiv, traces, layout);
+        }
+
+        el.addBtn.addEventListener("click", () => {
+          const x = parseFloat(el.xIn.value);
+          const y = parseFloat(el.yIn.value);
+          if (
+            !(
+              x >= X_RANGE[0] &&
+              x <= X_RANGE[1] &&
+              y >= Y_RANGE[0] &&
+              y <= Y_RANGE[1]
+            )
+          )
+            return;
+          observed.push({ x, y });
+          render();
+        });
+
+        el.resetAllBtn.addEventListener("click", () => {
+          observed.length = 0;
+          predicted.length = 0;
+          el.predInfo.textContent = "Last predicted price: —";
+          render();
+        });
+
+        el.predictBtn.addEventListener("click", () => {
+          const fitted = fit();
+          if (!fitted) {
+            el.predInfo.textContent = "Last predicted price: —";
+            render();
+            return;
+          }
+          const x = parseFloat(el.predX.value);
+          const yHat = predict1D(fitted.coefs, x);
+          if (
+            !(
+              x >= X_RANGE[0] &&
+              x <= X_RANGE[1] &&
+              yHat >= Y_RANGE[0] &&
+              yHat <= Y_RANGE[1]
+            )
+          )
+            return;
+          predicted.push({ x, y: yHat });
+          el.predInfo.textContent = `Last predicted price: $${yHat.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          render();
+        });
+
+        el.resetPredBtn.addEventListener("click", () => {
+          predicted.length = 0;
+          el.predInfo.textContent = "Last predicted price: —";
+          render();
+        });
+
+        el.degree.addEventListener("change", () => {
+          predicted.length = 0;
+          el.predInfo.textContent = "Last predicted price: —";
+          render();
+        });
+
+        render();
+      })();
+
+      /* =========================
+   App 2: 3D two-predictor polynomial surface (separate orders)
+========================= */
+      (function () {
+        const SQFT_RANGE = [0, 10000],
+          BED_RANGE = [0, 10],
+          PRICE_RANGE = [0, 5000000];
+        const observed = []; // {s,b,p}
+        const predicted = []; // {s,b,phat}
+        let projAxis = "sqft"; // "sqft" or "bed"
+
+        const el = {
+          sqftIn: document.getElementById("hs_sqft_in"),
+          bedIn: document.getElementById("hs_bed_in"),
+          priceIn: document.getElementById("hs_price_in"),
+          addBtn: document.getElementById("hs_add_btn"),
+          resetAllBtn: document.getElementById("hs_reset_all_btn"),
+          degSqft: document.getElementById("hs_deg_sqft"),
+          degBed: document.getElementById("hs_deg_bed"),
+          projSqft: document.getElementById("hs_proj_sqft"),
+          projBed: document.getElementById("hs_proj_bed"),
+          modelInfo: document.getElementById("hs_model_info"),
+          eqn: document.getElementById("hs_eqn"),
+          predSqft: document.getElementById("hs_pred_sqft"),
+          predBed: document.getElementById("hs_pred_bed"),
+          predictBtn: document.getElementById("hs_predict_btn"),
+          resetPredBtn: document.getElementById("hs_reset_pred_btn"),
+          predInfo: document.getElementById("hs_pred_info"),
+          plot3d: "hs_plot3d",
+          plot2d: "hs_plot2d",
+        };
+
+        function inRanges(s, b, p) {
+          return (
+            s >= SQFT_RANGE[0] &&
+            s <= SQFT_RANGE[1] &&
+            b >= BED_RANGE[0] &&
+            b <= BED_RANGE[1] &&
+            p >= PRICE_RANGE[0] &&
+            p <= PRICE_RANGE[1]
+          );
+        }
+
+        function buildFeatures2D(ss, bb, ds, db) {
+          // cols: [1, s^1..s^ds, b^1..b^db]
+          const X = [];
+          for (let i = 0; i < ss.length; i++) {
+            const s = ss[i],
+              b = bb[i];
+            const row = [1];
+            for (let p = 1; p <= ds; p++) row.push(Math.pow(s, p));
+            for (let p = 1; p <= db; p++) row.push(Math.pow(b, p));
+            X.push(row);
+          }
+          return X;
+        }
+
+        function nParams(ds, db) {
+          return 1 + ds + db;
+        }
+        function specAllowed(ds, db) {
+          return observed.length >= nParams(ds, db) + 1;
+        }
+
+        function equationPretty2D(coefs, ds, db) {
+          let html = `<span>Price = ${fmtCoef(coefs[0])}</span>`;
+          // sqft
+          for (let p = 1; p <= ds; p++) {
+            const c = coefs[p];
+            const sign = c >= 0 ? " + " : " \u2212 ";
+            const term = p === 1 ? "\u00B7Sqft" : `\u00B7Sqft<sup>${p}</sup>`;
+            html += `<span>${sign}${fmtCoef(Math.abs(c))}${term}</span>`;
+          }
+          // bed
+          const off = ds;
+          for (let p = 1; p <= db; p++) {
+            const c = coefs[off + p];
+            const sign = c >= 0 ? " + " : " \u2212 ";
+            const term =
+              p === 1 ? "\u00B7Bedrooms" : `\u00B7Bedrooms<sup>${p}</sup>`;
+            html += `<span>${sign}${fmtCoef(Math.abs(c))}${term}</span>`;
+          }
+          return html;
+        }
+
+        function predict2D(coefs, ds, db, s, b) {
+          let y = coefs[0];
+          let idx = 1;
+          for (let p = 1; p <= ds; p++) {
+            y += coefs[idx++] * Math.pow(s, p);
+          }
+          for (let p = 1; p <= db; p++) {
+            y += coefs[idx++] * Math.pow(b, p);
+          }
+          return y;
+        }
+
+        function updateDegreeOptions() {
+          const n = observed.length;
+          if (n < 2) {
+            el.degSqft.disabled = true;
+            el.degBed.disabled = true;
+            el.degSqft.value = "1";
+            el.degBed.value = "1";
+            return;
+          }
+          el.degSqft.disabled = false;
+          el.degBed.disabled = false;
+
+          let ds = parseInt(el.degSqft.value, 10);
+          let db = parseInt(el.degBed.value, 10);
+
+          // downgrade larger order first until feasible, minimum 1
+          while (!specAllowed(ds, db) && (ds > 1 || db > 1)) {
+            if (ds >= db && ds > 1) ds--;
+            else if (db > 1) db--;
+            else break;
+          }
+          if (!specAllowed(ds, db)) {
+            ds = 1;
+            db = 1;
+          }
+
+          if (String(ds) !== el.degSqft.value) el.degSqft.value = String(ds);
+          if (String(db) !== el.degBed.value) el.degBed.value = String(db);
+        }
+
+        function fit() {
+          updateDegreeOptions();
+          const ds = parseInt(el.degSqft.value, 10);
+          const db = parseInt(el.degBed.value, 10);
+          if (!specAllowed(ds, db)) return null;
+
+          const ss = observed.map((t) => t.s);
+          const bb = observed.map((t) => t.b);
+          const yy = observed.map((t) => t.p);
+
+          const X = buildFeatures2D(ss, bb, ds, db);
+          const coefs = leastSquares(X, yy);
+          return { ds, db, coefs };
+        }
+
+        function render() {
+          const fitted = fit();
+
+          if (!fitted) {
+            el.modelInfo.textContent = "Model: Not enough data";
+            el.eqn.textContent = "—";
+          } else {
+            el.modelInfo.textContent = `Model: Sqft ${fitted.ds}-order, Bedrooms ${fitted.db}-order (no interactions)`;
+            el.eqn.innerHTML = equationPretty2D(
+              fitted.coefs,
+              fitted.ds,
+              fitted.db,
+            );
+          }
+
+          // fitted at observed
+          let obsFit = null;
+          if (fitted && observed.length) {
+            const yHat = observed.map((t) =>
+              predict2D(fitted.coefs, fitted.ds, fitted.db, t.s, t.b),
+            );
+            obsFit = {
+              s: observed.map((t) => t.s),
+              b: observed.map((t) => t.b),
+              phat: yHat,
+            };
+          }
+
+          // --- 3D ---
+          const traces3d = [];
+
+          if (observed.length) {
+            traces3d.push({
+              type: "scatter3d",
+              mode: "markers",
+              name: "Observed (Actual)",
+              x: observed.map((t) => t.s),
+              y: observed.map((t) => t.b),
+              z: observed.map((t) => t.p),
+              marker: { size: 4 },
+            });
+          }
+          if (obsFit) {
+            traces3d.push({
+              type: "scatter3d",
+              mode: "markers",
+              name: "Fitted at Observed (ŷ)",
+              x: obsFit.s,
+              y: obsFit.b,
+              z: obsFit.phat,
+              marker: { size: 4, symbol: "circle-open" },
+            });
+          }
+          if (predicted.length) {
+            traces3d.push({
+              type: "scatter3d",
+              mode: "markers",
+              name: "Predicted (Ŷ)",
+              x: predicted.map((t) => t.s),
+              y: predicted.map((t) => t.b),
+              z: predicted.map((t) => t.phat),
+              marker: { size: 5, symbol: "diamond" },
+            });
+          }
+
+          if (fitted) {
+            const gs = 40,
+              gb = 35;
+            const xs = [],
+              ys = [],
+              zs = [];
+            for (let i = 0; i < gb; i++) {
+              const b =
+                BED_RANGE[0] + (BED_RANGE[1] - BED_RANGE[0]) * (i / (gb - 1));
+              const rowZ = [];
+              const rowX = [];
+              const rowY = [];
+              for (let j = 0; j < gs; j++) {
+                const s =
+                  SQFT_RANGE[0] +
+                  (SQFT_RANGE[1] - SQFT_RANGE[0]) * (j / (gs - 1));
+                rowX.push(s);
+                rowY.push(b);
+                rowZ.push(predict2D(fitted.coefs, fitted.ds, fitted.db, s, b));
+              }
+              xs.push(rowX);
+              ys.push(rowY);
+              zs.push(rowZ);
+            }
+            traces3d.push({
+              type: "surface",
+              name: "Fitted surface",
+              x: xs,
+              y: ys,
+              z: zs,
+              opacity: 0.55,
+              showscale: false,
+            });
+          }
+
+          const layout3d = {
+            margin: { l: 0, r: 0, t: 30, b: 0 },
+            scene: {
+              xaxis: { title: "House Size (sqft)", range: SQFT_RANGE },
+              yaxis: { title: "Bedrooms", range: BED_RANGE },
+              zaxis: { title: "House Price ($)", range: PRICE_RANGE },
+            },
+            title: { text: "3D Scatter + Regression Surface", x: 0.02 },
+          };
+
+          safePlotlyNew(el.plot3d, traces3d, layout3d);
+
+          // --- 2D projection ---
+          const traces2d = [];
+          if (observed.length) {
+            if (projAxis === "sqft") {
+              traces2d.push({
+                type: "scatter",
+                mode: "markers",
+                name: "Observed (Actual)",
+                x: observed.map((t) => t.s),
+                y: observed.map((t) => t.p),
+                marker: { size: 7, opacity: 0.9 },
+              });
+            } else {
+              traces2d.push({
+                type: "scatter",
+                mode: "markers",
+                name: "Observed (Actual)",
+                x: observed.map((t) => t.b),
+                y: observed.map((t) => t.p),
+                marker: { size: 7, opacity: 0.9 },
+              });
+            }
+          }
+
+          if (obsFit) {
+            if (projAxis === "sqft") {
+              traces2d.push({
+                type: "scatter",
+                mode: "markers",
+                name: "Fitted at Observed (ŷ)",
+                x: obsFit.s,
+                y: obsFit.phat,
+                marker: { size: 6, symbol: "circle-open", opacity: 0.95 },
+              });
+            } else {
+              traces2d.push({
+                type: "scatter",
+                mode: "markers",
+                name: "Fitted at Observed (ŷ)",
+                x: obsFit.b,
+                y: obsFit.phat,
+                marker: { size: 6, symbol: "circle-open", opacity: 0.95 },
+              });
+            }
+          }
+
+          if (predicted.length) {
+            if (projAxis === "sqft") {
+              traces2d.push({
+                type: "scatter",
+                mode: "markers",
+                name: "Predicted (Ŷ)",
+                x: predicted.map((t) => t.s),
+                y: predicted.map((t) => t.phat),
+                marker: { size: 8, symbol: "diamond", opacity: 0.95 },
+              });
+            } else {
+              traces2d.push({
+                type: "scatter",
+                mode: "markers",
+                name: "Predicted (Ŷ)",
+                x: predicted.map((t) => t.b),
+                y: predicted.map((t) => t.phat),
+                marker: { size: 8, symbol: "diamond", opacity: 0.95 },
+              });
+            }
+          }
+
+          if (fitted) {
+            // projection band from grid
+            const gs = 70,
+              gb = 50;
+            const bandX = [],
+              bandY = [];
+            for (let i = 0; i < gb; i++) {
+              const b =
+                BED_RANGE[0] + (BED_RANGE[1] - BED_RANGE[0]) * (i / (gb - 1));
+              for (let j = 0; j < gs; j++) {
+                const s =
+                  SQFT_RANGE[0] +
+                  (SQFT_RANGE[1] - SQFT_RANGE[0]) * (j / (gs - 1));
+                const p = predict2D(fitted.coefs, fitted.ds, fitted.db, s, b);
+                if (projAxis === "sqft") {
+                  bandX.push(s);
+                  bandY.push(p);
+                } else {
+                  bandX.push(b);
+                  bandY.push(p);
+                }
+              }
+            }
+            traces2d.push({
+              type: "scatter",
+              mode: "markers",
+              name: "Projected fitted surface",
+              x: bandX,
+              y: bandY,
+              marker: { size: 3, opacity: 0.2 },
+            });
+          }
+
+          const layout2d = {
+            margin: { l: 60, r: 20, t: 30, b: 50 },
+            title: { text: "2D Projection of Fitted Surface", x: 0.02 },
+            xaxis: {
+              title: projAxis === "sqft" ? "House Size (sqft)" : "Bedrooms",
+              range: projAxis === "sqft" ? SQFT_RANGE : BED_RANGE,
+              fixedrange: true,
+            },
+            yaxis: {
+              title: "House Price ($)",
+              range: PRICE_RANGE,
+              fixedrange: true,
+            },
+            legend: { orientation: "v" },
+          };
+
+          safePlotlyNew(el.plot2d, traces2d, layout2d);
+        }
+
+        // projection toggles
+        function setProj(axis) {
+          projAxis = axis;
+          el.projSqft.classList.toggle("active", axis === "sqft");
+          el.projBed.classList.toggle("active", axis === "bed");
+          render();
+        }
+        el.projSqft.addEventListener("click", () => setProj("sqft"));
+        el.projBed.addEventListener("click", () => setProj("bed"));
+
+        el.addBtn.addEventListener("click", () => {
+          const s = parseFloat(el.sqftIn.value);
+          const b = parseFloat(el.bedIn.value);
+          const p = parseFloat(el.priceIn.value);
+          if (!inRanges(s, b, p)) return;
+          observed.push({ s, b, p });
+          render();
+        });
+
+        el.resetAllBtn.addEventListener("click", () => {
+          observed.length = 0;
+          predicted.length = 0;
+          el.predInfo.textContent = "Last predicted price: —";
+          render();
+        });
+
+        el.predictBtn.addEventListener("click", () => {
+          const fitted = fit();
+          if (!fitted) {
+            el.predInfo.textContent = "Last predicted price: —";
+            render();
+            return;
+          }
+          const s = parseFloat(el.predSqft.value);
+          const b = parseFloat(el.predBed.value);
+          const phat = predict2D(fitted.coefs, fitted.ds, fitted.db, s, b);
+          if (!inRanges(s, b, phat)) return;
+          predicted.push({ s, b, phat });
+          el.predInfo.textContent = `Last predicted price: $${phat.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          render();
+        });
+
+        el.resetPredBtn.addEventListener("click", () => {
+          predicted.length = 0;
+          el.predInfo.textContent = "Last predicted price: —";
+          render();
+        });
+
+        el.degSqft.addEventListener("change", () => {
+          predicted.length = 0;
+          el.predInfo.textContent = "Last predicted price: —";
+          render();
+        });
+        el.degBed.addEventListener("change", () => {
+          predicted.length = 0;
+          el.predInfo.textContent = "Last predicted price: —";
+          render();
+        });
+
+        render();
+      })();
+
+      /* =========================
+   App 3: Gradient Descent on slope (b) with fixed loss axis
+========================= */
+      (function () {
+        // data (100 points) exactly like notebook
+        const seed = 42;
+        // deterministic RNG replacement: use a simple LCG for repeatability
+        function lcg(seed) {
+          let s = seed >>> 0;
+          return function () {
+            s = (1664525 * s + 1013904223) >>> 0;
+            return s / 4294967296;
+          };
+        }
+        const rand = lcg(seed);
+        const n = 100;
+        const x = [],
+          y = [];
+        for (let i = 0; i < n; i++) {
+          const xi = 0 + (100 - 0) * (i / (n - 1));
+          // approx normal via Box-Muller using LCG
+          const u1 = Math.max(1e-12, rand());
+          const u2 = Math.max(1e-12, rand());
+          const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2); // N(0,1)
+          const noise = 250 * z;
+          const yi = 20 + 35 * xi + noise;
+          x.push(xi);
+          y.push(yi);
+        }
+        const X_MIN = Math.min(...x),
+          X_MAX = Math.max(...x);
+        const Y_MIN = Math.min(...y) - 1000,
+          Y_MAX = Math.max(...y) + 1000;
+
+        // loss and gradient
+        function sse(a, b) {
+          let sum = 0;
+          for (let i = 0; i < n; i++) {
+            const e = a + b * x[i] - y[i];
+            sum += e * e;
+          }
+          return sum;
+        }
+        function gradB(a, b) {
+          let sum = 0;
+          for (let i = 0; i < n; i++) {
+            const e = a + b * x[i] - y[i];
+            sum += e * x[i];
+          }
+          return 2.0 * sum;
+        }
+        function bAtStep(a, lr, t, b0) {
+          let b = b0;
+          for (let i = 0; i < t; i++) {
+            b -= lr * gradB(a, b);
+          }
+          return b;
+        }
+
+        // fixed b-domain for loss plot (match the text; keep wide enough to show path)
+        const B_MIN = -100,
+          B_MAX = 100;
+        const bGrid = [];
+        const gridN = 500;
+        for (let i = 0; i < gridN; i++) {
+          bGrid.push(B_MIN + (B_MAX - B_MIN) * (i / (gridN - 1)));
+        }
+
+        // UI refs
+        const el = {
+          a: document.getElementById("gd_intercept"),
+          b0: document.getElementById("gd_b0"),
+          lr: document.getElementById("gd_lr"),
+          step: document.getElementById("gd_step"),
+          reset: document.getElementById("gd_reset"),
+          aLbl: document.getElementById("gd_a_lbl"),
+          b0Lbl: document.getElementById("gd_b0_lbl"),
+          lrLbl: document.getElementById("gd_lr_lbl"),
+          stepLbl: document.getElementById("gd_step_lbl"),
+          pillB: document.getElementById("gd_pill_b"),
+          pillSSE: document.getElementById("gd_pill_sse"),
+          leftDiv: "gd_plot_left",
+          rightDiv: "gd_plot_right",
+        };
+
+        // fixed SSE y-axis range computed per intercept (as notebook did); but keep it stable per intercept setting
+        function computeSseLimits(a) {
+          const vals = bGrid.map((b) => sse(a, b));
+          const mn = Math.min(...vals),
+            mx = Math.max(...vals);
+          const pad = 0.05 * (mx - mn);
+          return { min: mn - pad, max: mx + pad, losses: vals };
+        }
+
+        function updateLabels() {
+          const a = parseFloat(el.a.value);
+          const b0 = parseFloat(el.b0.value);
+          const lr = Math.pow(10, parseFloat(el.lr.value));
+          const t = parseInt(el.step.value, 10);
+          el.aLbl.textContent = `Intercept: ${a.toFixed(1)}`;
+          el.b0Lbl.textContent = `Initial slope (b₀): ${b0.toFixed(1)}`;
+          el.lrLbl.textContent = `Learning rate: ${lr.toExponential(2)}`;
+          el.stepLbl.textContent = `Step (t): ${t}`;
+        }
+
+        function render() {
+          const a = parseFloat(el.a.value);
+          const b0 = parseFloat(el.b0.value);
+          const lr = Math.pow(10, parseFloat(el.lr.value));
+          const t = parseInt(el.step.value, 10);
+
+          const bT = bAtStep(a, lr, t, b0);
+          const sseT = sse(a, bT);
+
+          const { min: sseMin, max: sseMax, losses } = computeSseLimits(a);
+
+          // path subset for clarity (up to 60 points)
+          let idx = [];
+          if (t === 0) idx = [0];
+          else {
+            const m = Math.min(t, 60);
+            for (let k = 0; k <= m; k++) {
+              idx.push(Math.round((t * k) / m));
+            }
+            // unique
+            idx = [...new Set(idx)];
+          }
+          const bPath = idx.map((tt) => bAtStep(a, lr, tt, b0));
+          const ssePath = bPath.map((bb) => sse(a, bb));
+
+          // Left plot: data + line
+          const xx = [X_MIN, X_MAX];
+          const yy = [a + bT * xx[0], a + bT * xx[1]];
+
+          safePlotlyNew(
+            el.leftDiv,
+            [
+              {
+                type: "scatter",
+                mode: "markers",
+                x: x,
+                y: y,
+                name: "Data",
+                marker: { size: 5 },
+              },
+              {
+                type: "scatter",
+                mode: "lines",
+                x: xx,
+                y: yy,
+                name: "Regression line",
+                line: { width: 3, color: "red" },
+              },
+            ],
+            {
+              margin: { l: 60, r: 20, t: 30, b: 50 },
+              title: { text: "Regression line update", x: 0.02 },
+              xaxis: { range: [X_MIN, X_MAX], fixedrange: true },
+              yaxis: { range: [Y_MIN, Y_MAX], fixedrange: true },
+              showlegend: false,
+            },
+          );
+
+          // Right plot: SSE(b) + path + current diamond
+          safePlotlyNew(
+            el.rightDiv,
+            [
+              {
+                type: "scatter",
+                mode: "lines",
+                x: bGrid,
+                y: losses,
+                name: "SSE(b)",
+                line: { width: 1 },
+              },
+              {
+                type: "scatter",
+                mode: "markers",
+                x: bPath,
+                y: ssePath,
+                name: "GD path",
+                marker: { size: 6 },
+              },
+              {
+                type: "scatter",
+                mode: "markers",
+                x: [bT],
+                y: [sseT],
+                name: "Current step",
+                marker: {
+                  size: 12,
+                  symbol: "diamond",
+                  color: "orange",
+                  line: { width: 2, color: "#111827" },
+                },
+              },
+            ],
+            {
+              margin: { l: 70, r: 20, t: 30, b: 55 },
+              title: { text: "Loss surface (fixed)", x: 0.02 },
+              xaxis: {
+                title: "Slope b",
+                range: [B_MIN, B_MAX],
+                fixedrange: true,
+              },
+              yaxis: {
+                title: "SSE",
+                range: [sseMin, sseMax],
+                fixedrange: true,
+              },
+              legend: { font: { size: 11 } },
+            },
+          );
+
+          el.pillB.textContent = `bₜ = ${bT.toFixed(2)}`;
+          el.pillSSE.textContent = `SSE = ${Math.round(sseT).toLocaleString()}`;
+
+          updateLabels();
+        }
+
+        function onAny() {
+          render();
+        }
+        el.a.addEventListener("input", onAny);
+        el.b0.addEventListener("input", onAny);
+        el.lr.addEventListener("input", onAny);
+        el.step.addEventListener("input", onAny);
+
+        el.reset.addEventListener("click", () => {
+          el.step.value = "0";
+          render();
+        });
+
+        render();
+      })();
+
+      /* =========================
+   App 4: Logistic Regression vs Linear Probability Model
+========================= */
+      (function () {
+        const X_RANGE = [0, 10000];
+        const Y_RANGE = [-1, 2];
+        const observed = []; // {x, y}
+        const predicted = []; // {x, pLogit, clsHat, yLin}
+
+        const el = {
+          xIn: document.getElementById("lg_x_in"),
+          yIn: document.getElementById("lg_y_in"),
+          addBtn: document.getElementById("lg_add_btn"),
+          resetAllBtn: document.getElementById("lg_reset_all_btn"),
+          modelInfo: document.getElementById("lg_model_info"),
+          eqnLogit: document.getElementById("lg_eqn_logit"),
+          eqnLinear: document.getElementById("lg_eqn_linear"),
+          predX: document.getElementById("lg_pred_x"),
+          predictBtn: document.getElementById("lg_predict_btn"),
+          resetPredBtn: document.getElementById("lg_reset_pred_btn"),
+          predInfo: document.getElementById("lg_pred_info"),
+          leftDiv: "lg_plot_left",
+          rightDiv: "lg_plot_right",
+        };
+
+        function sigmoid(z) {
+          if (z >= 0) {
+            const ez = Math.exp(-z);
+            return 1 / (1 + ez);
+          } else {
+            const ez = Math.exp(z);
+            return ez / (1 + ez);
+          }
+        }
+
+        function enoughPointsForLinear() {
+          return observed.length >= 3;
+        }
+
+        function enoughPointsForLogistic() {
+          if (observed.length < 3) return false;
+          const ys = observed.map((p) => p.y);
+          return new Set(ys).size >= 2;
+        }
+
+        function fitLinearModel() {
+          if (!enoughPointsForLinear()) return null;
+          const xs = observed.map((p) => p.x);
+          const ys = observed.map((p) => p.y);
+          const n = xs.length;
+          const meanX = xs.reduce((a, b) => a + b, 0) / n;
+          const meanY = ys.reduce((a, b) => a + b, 0) / n;
+          let num = 0,
+            den = 0;
+          for (let i = 0; i < n; i++) {
+            num += (xs[i] - meanX) * (ys[i] - meanY);
+            den += (xs[i] - meanX) * (xs[i] - meanX);
+          }
+          const slope = den === 0 ? 0 : num / den;
+          const intercept = meanY - slope * meanX;
+          return { intercept, slope };
+        }
+
+        function solve2x2(a, b, c, d, e, f) {
+          const det = a * d - b * c;
+          if (Math.abs(det) < 1e-12) return null;
+          return [(e * d - b * f) / det, (a * f - e * c) / det];
+        }
+
+        function fitLogisticModel() {
+          if (!enoughPointsForLogistic()) return null;
+
+          // Match sklearn LogisticRegression(solver="lbfgs", C=1.0) much more closely
+          // by minimizing:
+          //   mean(log(1 + exp(z)) - y*z) + 0.5 * (slope^2) / n
+          // where z = intercept + slope * x
+          //
+          // This keeps the layout and downstream prediction logic unchanged, but makes
+          // the fitted coefficients and probabilities much closer to the notebook.
+
+          const xs = observed.map((p) => p.x);
+          const ys = observed.map((p) => p.y);
+          const n = xs.length;
+
+          let b0 = 0.0;
+          let b1 = 0.0;
+          const ridge = 1.0 / n;
+
+          for (let iter = 0; iter < 100; iter++) {
+            let g0 = 0.0,
+              g1 = 0.0;
+            let h00 = 0.0,
+              h01 = 0.0,
+              h11 = 0.0;
+
+            for (let i = 0; i < n; i++) {
+              const x = xs[i];
+              const y = ys[i];
+              const p = Math.min(
+                1 - 1e-12,
+                Math.max(1e-12, sigmoid(b0 + b1 * x)),
+              );
+              const w = p * (1 - p);
+
+              g0 += p - y;
+              g1 += (p - y) * x;
+
+              h00 += w;
+              h01 += w * x;
+              h11 += w * x * x;
+            }
+
+            // mean log-loss gradient/Hessian
+            g0 /= n;
+            g1 /= n;
+            h00 /= n;
+            h01 /= n;
+            h11 /= n;
+
+            // L2 penalty on slope only
+            g1 += ridge * b1;
+            h11 += ridge;
+
+            const step = solve2x2(h00, h01, h01, h11, g0, g1);
+            if (!step) return null;
+
+            // Newton step for minimization
+            b0 -= step[0];
+            b1 -= step[1];
+
+            if (Math.max(Math.abs(step[0]), Math.abs(step[1])) < 1e-10) {
+              break;
+            }
+          }
+
+          return {
+            intercept: b0,
+            slope: b1,
+          };
+        }
+
+        function predictLogisticProb(model, x) {
+          return sigmoid(model.intercept + model.slope * x);
+        }
+
+        function predictLogisticClass(model, x) {
+          return predictLogisticProb(model, x) >= 0.5 ? 1 : 0;
+        }
+
+        function predictLinear(model, x) {
+          return model.intercept + model.slope * x;
+        }
+
+        function fmtNum(v, digits = 4) {
+          const av = Math.abs(v);
+          if (av !== 0 && (av >= 1e6 || av < 1e-4)) return v.toExponential(3);
+          return v.toFixed(digits);
+        }
+
+        function logisticEqnHTML(model) {
+          if (!model) return "—";
+          const b0 = fmtNum(model.intercept);
+          const b1 = fmtNum(model.slope);
+          const sign = model.slope >= 0 ? " + " : " − ";
+          return `P(Clicked = 1) = 1 / (1 + e<sup>−(${b0}${sign}${fmtNum(Math.abs(model.slope))}·X)</sup>)`;
+        }
+
+        function linearEqnHTML(model) {
+          if (!model) return "—";
+          const sign = model.slope >= 0 ? " + " : " − ";
+          return `Ŷ = ${fmtNum(model.intercept)}${sign}${fmtNum(Math.abs(model.slope))}·X`;
+        }
+
+        function updatePredictionText() {
+          if (!predicted.length) {
+            el.predInfo.innerHTML = "No predictions yet.";
+            return;
+          }
+          const last = predicted[predicted.length - 1];
+          el.predInfo.innerHTML =
+            `Spend to Predict = ${last.x.toLocaleString(undefined, { maximumFractionDigits: 0 })}<br>` +
+            `Logistic Predicted Probability = ${last.pLogit.toFixed(3)}<br>` +
+            `Logistic Predicted Class = ${last.clsHat}<br>` +
+            `Linear Predicted Value = ${last.yLin.toFixed(3)}`;
+        }
+
+        function render() {
+          const logitModel = fitLogisticModel();
+          const linearModel = fitLinearModel();
+
+          if (!enoughPointsForLinear()) {
+            el.modelInfo.textContent =
+              "Add at least 2 points to fit the linear probability model and at least 3 points with both 0s and 1s to fit logistic regression.";
+          } else if (!enoughPointsForLogistic()) {
+            el.modelInfo.textContent =
+              "Linear probability model fitted. Add at least 3 points with both 0s and 1s to fit logistic regression.";
+          } else {
+            el.modelInfo.textContent =
+              "Both models fitted using the current observed points.";
+          }
+
+          el.eqnLogit.innerHTML = logisticEqnHTML(logitModel);
+          el.eqnLinear.innerHTML = linearEqnHTML(linearModel);
+          updatePredictionText();
+
+          const leftTraces = [];
+          const rightTraces = [];
+
+          if (observed.length) {
+            const xsObs = observed.map((p) => p.x);
+            const ysObs = observed.map((p) => p.y);
+
+            leftTraces.push({
+              x: xsObs,
+              y: ysObs,
+              mode: "markers",
+              name: "Observed (Actual)",
+              marker: { size: 8 },
+            });
+
+            rightTraces.push({
+              x: xsObs,
+              y: ysObs,
+              mode: "markers",
+              name: "Observed (Actual)",
+              marker: { size: 8 },
+            });
+          }
+
+          if (predicted.length) {
+            leftTraces.push({
+              x: predicted.map((p) => p.x),
+              y: predicted.map((p) => p.pLogit),
+              mode: "markers",
+              name: "Predicted P(Clicked=1)",
+              marker: {
+                size: 9,
+                symbol: "diamond",
+                color: "red",
+                line: { width: 2, color: "#111827" },
+              },
+            });
+
+            rightTraces.push({
+              x: predicted.map((p) => p.x),
+              y: predicted.map((p) => p.yLin),
+              mode: "markers",
+              name: "Predicted (Linear Ŷ)",
+              marker: {
+                size: 9,
+                symbol: "diamond",
+                color: "red",
+                line: { width: 2, color: "#111827" },
+              },
+            });
+          }
+
+          const n = 220;
+          const xsFit = [];
+          for (let i = 0; i < n; i++) {
+            xsFit.push(X_RANGE[0] + (X_RANGE[1] - X_RANGE[0]) * (i / (n - 1)));
+          }
+
+          if (logitModel) {
+            leftTraces.push({
+              x: xsFit,
+              y: xsFit.map((x) => predictLogisticProb(logitModel, x)),
+              mode: "lines",
+              name: "Fitted Probability",
+              line: { width: 2 },
+            });
+            leftTraces.push({
+              x: [X_RANGE[0], X_RANGE[1]],
+              y: [0.5, 0.5],
+              mode: "lines",
+              name: "Threshold = 0.50",
+              line: { width: 1, dash: "dash" },
+            });
+          }
+
+          if (linearModel) {
+            rightTraces.push({
+              x: xsFit,
+              y: xsFit.map((x) => predictLinear(linearModel, x)),
+              mode: "lines",
+              name: "Fitted Line",
+              line: { width: 2 },
+            });
+            rightTraces.push({
+              x: [X_RANGE[0], X_RANGE[1]],
+              y: [0.5, 0.5],
+              mode: "lines",
+              name: "Reference = 0.50",
+              line: { width: 1, dash: "dash" },
+            });
+          }
+
+          safePlotlyNew(el.leftDiv, leftTraces, {
+            margin: { l: 60, r: 20, t: 40, b: 50 },
+            title: { text: "Logistic Regression", x: 0.02 },
+            xaxis: { title: "Ad Spend ($)", range: X_RANGE, fixedrange: true },
+            yaxis: {
+              title: "Clicked Ad (0 = No, 1 = Yes)",
+              range: Y_RANGE,
+              fixedrange: true,
+            },
+            legend: { orientation: "v" },
+          });
+
+          safePlotlyNew(el.rightDiv, rightTraces, {
+            margin: { l: 60, r: 20, t: 40, b: 50 },
+            title: { text: "Linear Probability Model", x: 0.02 },
+            xaxis: { title: "Ad Spend ($)", range: X_RANGE, fixedrange: true },
+            yaxis: {
+              title: "Predicted Value",
+              range: Y_RANGE,
+              fixedrange: true,
+            },
+            legend: { orientation: "v" },
+          });
+
+          if (window.MathJax && window.MathJax.typesetPromise) {
+            window.MathJax.typesetPromise();
+          }
+        }
+
+        el.addBtn.addEventListener("click", () => {
+          const x = parseFloat(el.xIn.value);
+          const y = parseInt(el.yIn.value, 10);
+          if (!(x >= X_RANGE[0] && x <= X_RANGE[1])) return;
+          observed.push({ x, y });
+          render();
+        });
+
+        el.resetAllBtn.addEventListener("click", () => {
+          observed.length = 0;
+          predicted.length = 0;
+          render();
+        });
+
+        el.predictBtn.addEventListener("click", () => {
+          const x = parseFloat(el.predX.value);
+          if (!(x >= X_RANGE[0] && x <= X_RANGE[1])) return;
+
+          const logitModel = fitLogisticModel();
+          const linearModel = fitLinearModel();
+          if (!logitModel || !linearModel) {
+            render();
+            return;
+          }
+
+          predicted.push({
+            x,
+            pLogit: predictLogisticProb(logitModel, x),
+            clsHat: predictLogisticClass(logitModel, x),
+            yLin: predictLinear(linearModel, x),
+          });
+          render();
+        });
+
+        el.resetPredBtn.addEventListener("click", () => {
+          predicted.length = 0;
+          render();
+        });
+
+        render();
+      })();
+
+      /* =========================
+   App 5: Logistic Regression Threshold Explorer
+========================= */
+      (function () {
+        // Data, fitted probabilities, and ROC components are generated from the notebook's
+        // Logistic Regression Threshold Explorer cell:
+        // rng = np.random.default_rng(42), n = 50, LogisticRegression().
+        const adSpend = [
+          4.3803765787, 6.3817256104, 9.4177347888, 12.8113632676,
+          12.9921505335, 13.9752483609, 15.4289492068, 18.9471359084,
+          19.4638707852, 22.6909349051, 22.7238721785, 28.832810393,
+          31.2366641382, 32.5825358138, 35.452596813, 37.0459706035,
+          37.0798024233, 38.747837903, 43.7151918872, 43.8878439752,
+          44.3414198827, 45.0385937896, 46.6721003727, 46.9555811276,
+          47.5704926226, 55.4584787016, 63.1664399122, 64.3865120081,
+          66.9813994683, 68.2495503975, 68.3048953242, 69.7368029059,
+          70.0265102002, 74.4762155908, 75.8087740085, 76.113970199,
+          77.3956048556, 77.8383497074, 78.6064305277, 80.4764357497,
+          82.2761613271, 82.7631171993, 83.2259801395, 83.2678196058,
+          85.8597919911, 89.3121121322, 92.6764988849, 96.7509732434,
+          97.0698024395, 97.5622351637,
+        ];
+        const clicks = [
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+          0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+          1, 1, 1, 1,
+        ];
+        const predProb = [
+          7.00984e-5, 9.77602e-5, 0.0001619147, 0.0002845767, 0.0002932551,
+          0.0003452925, 0.0004396231, 0.0007886538, 0.0008593217, 0.0014683653,
+          0.001476414, 0.0040649, 0.0060492845, 0.0075543414, 0.0121162674,
+          0.0157323175, 0.0158196292, 0.0207688608, 0.046190608, 0.0474714861,
+          0.050999098, 0.056908194, 0.0733578037, 0.0766257677, 0.0841773734,
+          0.2542956288, 0.5511482184, 0.6006321197, 0.6983381482, 0.7408087969,
+          0.7425711714, 0.7853925764, 0.793397158, 0.8894477622, 0.9094219779,
+          0.9135146492, 0.9289284955, 0.9336361338, 0.9411215431, 0.9561613665,
+          0.9671227408, 0.9696011878, 0.9717886485, 0.9719786756, 0.9816062739,
+          0.9895535527, 0.9940012525, 0.9969434509, 0.9971007514, 0.9973279872,
+        ];
+        const xGrid = [
+          4.3803765787, 4.6920215907, 5.0036666027, 5.3153116147, 5.6269566267,
+          5.9386016387, 6.2502466507, 6.5618916627, 6.8735366746, 7.1851816866,
+          7.4968266986, 7.8084717106, 8.1201167226, 8.4317617346, 8.7434067466,
+          9.0550517586, 9.3666967706, 9.6783417825, 9.9899867945, 10.3016318065,
+          10.6132768185, 10.9249218305, 11.2365668425, 11.5482118545,
+          11.8598568665, 12.1715018785, 12.4831468905, 12.7947919024,
+          13.1064369144, 13.4180819264, 13.7297269384, 14.0413719504,
+          14.3530169624, 14.6646619744, 14.9763069864, 15.2879519984,
+          15.5995970104, 15.9112420223, 16.2228870343, 16.5345320463,
+          16.8461770583, 17.1578220703, 17.4694670823, 17.7811120943,
+          18.0927571063, 18.4044021183, 18.7160471303, 19.0276921422,
+          19.3393371542, 19.6509821662, 19.9626271782, 20.2742721902,
+          20.5859172022, 20.8975622142, 21.2092072262, 21.5208522382,
+          21.8324972502, 22.1441422621, 22.4557872741, 22.7674322861,
+          23.0790772981, 23.3907223101, 23.7023673221, 24.0140123341,
+          24.3256573461, 24.6373023581, 24.9489473701, 25.260592382,
+          25.572237394, 25.883882406, 26.195527418, 26.50717243, 26.818817442,
+          27.130462454, 27.442107466, 27.753752478, 28.0653974899,
+          28.3770425019, 28.6886875139, 29.0003325259, 29.3119775379,
+          29.6236225499, 29.9352675619, 30.2469125739, 30.5585575859,
+          30.8702025979, 31.1818476098, 31.4934926218, 31.8051376338,
+          32.1167826458, 32.4284276578, 32.7400726698, 33.0517176818,
+          33.3633626938, 33.6750077058, 33.9866527178, 34.2982977297,
+          34.6099427417, 34.9215877537, 35.2332327657, 35.5448777777,
+          35.8565227897, 36.1681678017, 36.4798128137, 36.7914578257,
+          37.1031028377, 37.4147478496, 37.7263928616, 38.0380378736,
+          38.3496828856, 38.6613278976, 38.9729729096, 39.2846179216,
+          39.5962629336, 39.9079079456, 40.2195529576, 40.5311979695,
+          40.8428429815, 41.1544879935, 41.4661330055, 41.7777780175,
+          42.0894230295, 42.4010680415, 42.7127130535, 43.0243580655,
+          43.3360030774, 43.6476480894, 43.9592931014, 44.2709381134,
+          44.5825831254, 44.8942281374, 45.2058731494, 45.5175181614,
+          45.8291631734, 46.1408081854, 46.4524531973, 46.7640982093,
+          47.0757432213, 47.3873882333, 47.6990332453, 48.0106782573,
+          48.3223232693, 48.6339682813, 48.9456132933, 49.2572583053,
+          49.5689033172, 49.8805483292, 50.1921933412, 50.5038383532,
+          50.8154833652, 51.1271283772, 51.4387733892, 51.7504184012,
+          52.0620634132, 52.3737084252, 52.6853534371, 52.9969984491,
+          53.3086434611, 53.6202884731, 53.9319334851, 54.2435784971,
+          54.5552235091, 54.8668685211, 55.1785135331, 55.4901585451,
+          55.801803557, 56.113448569, 56.425093581, 56.736738593, 57.048383605,
+          57.360028617, 57.671673629, 57.983318641, 58.294963653, 58.6066086649,
+          58.9182536769, 59.2298986889, 59.5415437009, 59.8531887129,
+          60.1648337249, 60.4764787369, 60.7881237489, 61.0997687609,
+          61.4114137729, 61.7230587848, 62.0347037968, 62.3463488088,
+          62.6579938208, 62.9696388328, 63.2812838448, 63.5929288568,
+          63.9045738688, 64.2162188808, 64.5278638928, 64.8395089047,
+          65.1511539167, 65.4627989287, 65.7744439407, 66.0860889527,
+          66.3977339647, 66.7093789767, 67.0210239887, 67.3326690007,
+          67.6443140127, 67.9559590246, 68.2676040366, 68.5792490486,
+          68.8908940606, 69.2025390726, 69.5141840846, 69.8258290966,
+          70.1374741086, 70.4491191206, 70.7607641326, 71.0724091445,
+          71.3840541565, 71.6956991685, 72.0073441805, 72.3189891925,
+          72.6306342045, 72.9422792165, 73.2539242285, 73.5655692405,
+          73.8772142525, 74.1888592644, 74.5005042764, 74.8121492884,
+          75.1237943004, 75.4354393124, 75.7470843244, 76.0587293364,
+          76.3703743484, 76.6820193604, 76.9936643723, 77.3053093843,
+          77.6169543963, 77.9285994083, 78.2402444203, 78.5518894323,
+          78.8635344443, 79.1751794563, 79.4868244683, 79.7984694803,
+          80.1101144922, 80.4217595042, 80.7334045162, 81.0450495282,
+          81.3566945402, 81.6683395522, 81.9799845642, 82.2916295762,
+          82.6032745882, 82.9149196002, 83.2265646121, 83.5382096241,
+          83.8498546361, 84.1614996481, 84.4731446601, 84.7847896721,
+          85.0964346841, 85.4080796961, 85.7197247081, 86.0313697201,
+          86.343014732, 86.654659744, 86.966304756, 87.277949768, 87.58959478,
+          87.901239792, 88.212884804, 88.524529816, 88.836174828, 89.14781984,
+          89.4594648519, 89.7711098639, 90.0827548759, 90.3943998879,
+          90.7060448999, 91.0176899119, 91.3293349239, 91.6409799359,
+          91.9526249479, 92.2642699598, 92.5759149718, 92.8875599838,
+          93.1992049958, 93.5108500078, 93.8224950198, 94.1341400318,
+          94.4457850438, 94.7574300558, 95.0690750678, 95.3807200797,
+          95.6923650917, 96.0040101037, 96.3156551157, 96.6273001277,
+          96.9389451397, 97.2505901517, 97.5622351637,
+        ];
+        const probGrid = [
+          7.00984e-5, 7.38248e-5, 7.77493e-5, 8.18824e-5, 8.62352e-5,
+          9.08194e-5, 9.56472e-5, 0.0001007317, 0.0001060863, 0.0001117256,
+          0.0001176647, 0.0001239194, 0.0001305065, 0.0001374438, 0.0001447497,
+          0.000152444, 0.0001605472, 0.000169081, 0.0001780684, 0.0001875333,
+          0.0001975013, 0.000207999, 0.0002190546, 0.0002306977, 0.0002429594,
+          0.0002558727, 0.0002694722, 0.0002837942, 0.0002988772, 0.0003147616,
+          0.00033149, 0.000349107, 0.00036766, 0.0003871986, 0.0004077751,
+          0.0004294446, 0.0004522651, 0.0004762977, 0.0005016067, 0.0005282598,
+          0.0005563284, 0.0005858875, 0.0006170162, 0.0006497977, 0.0006843197,
+          0.0007206744, 0.000758959, 0.0007992758, 0.0008417324, 0.0008864423,
+          0.0009335248, 0.0009831056, 0.001035317, 0.0010902982, 0.0011481958,
+          0.0012091643, 0.001273366, 0.001340972, 0.0014121622, 0.0014871263,
+          0.0015660635, 0.0016491838, 0.0017367082, 0.001828869, 0.0019259111,
+          0.0020280919, 0.0021356823, 0.0022489676, 0.0023682478, 0.0024938385,
+          0.0026260718, 0.0027652973, 0.0029118824, 0.003066214, 0.0032286988,
+          0.0033997646, 0.0035798614, 0.0037694625, 0.0039690654, 0.0041791935,
+          0.0044003969, 0.0046332541, 0.0048783731, 0.0051363931, 0.0054079856,
+          0.0056938568, 0.0059947483, 0.0063114394, 0.0066447489, 0.0069955367,
+          0.0073647059, 0.0077532048, 0.008162029, 0.0085922238, 0.009044886,
+          0.0095211667, 0.0100222735, 0.010549473, 0.0111040936, 0.0116875281,
+          0.0123012362, 0.0129467478, 0.0136256655, 0.0143396679, 0.0150905125,
+          0.015880039, 0.0167101722, 0.0175829255, 0.0185004041, 0.0194648083,
+          0.0204784368, 0.0215436902, 0.0226630741, 0.0238392029, 0.0250748023,
+          0.0263727134, 0.0277358951, 0.0291674275, 0.0306705149, 0.0322484881,
+          0.033904807, 0.0356430631, 0.0374669812, 0.039380421, 0.0413873785,
+          0.0434919865, 0.0456985149, 0.0480113705, 0.0504350961, 0.0529743683,
+          0.0556339958, 0.0584189154, 0.0613341879, 0.0643849931, 0.0675766228,
+          0.0709144731, 0.0744040358, 0.0780508877, 0.0818606783, 0.0858391169,
+          0.0899919564, 0.0943249771, 0.0988439671, 0.1035547017, 0.1084629205,
+          0.1135743022, 0.1188944377, 0.1244288013, 0.1301827187, 0.1361613347,
+          0.1423695769, 0.1488121196, 0.155493344, 0.1624172981, 0.1695876548,
+          0.1770076684, 0.1846801311, 0.1926073282, 0.2007909934, 0.2092322645,
+          0.2179316395, 0.226888934, 0.2361032406, 0.2455728903, 0.2552954166,
+          0.2652675237, 0.2754850581, 0.2859429854, 0.2966353719, 0.3075553726,
+          0.3186952248, 0.3300462492, 0.3415988577, 0.3533425689, 0.3652660311,
+          0.3773570539, 0.3896026461, 0.4019890633, 0.4145018613, 0.4271259579,
+          0.4398457003, 0.4526449399, 0.4655071109, 0.4784153152, 0.4913524095,
+          0.5043010963, 0.517244016, 0.5301638399, 0.5430433626, 0.5558655939,
+          0.5686138469, 0.5812718237, 0.5938236966, 0.606254184, 0.6185486202,
+          0.6306930195, 0.6426741323, 0.6544794948, 0.6660974697, 0.6775172805,
+          0.6887290372, 0.6997237541, 0.7104933603, 0.7210307031, 0.731329544,
+          0.7413845485, 0.7511912696, 0.7607461265, 0.7700463778, 0.7790900905,
+          0.7878761057, 0.7964040008, 0.8046740493, 0.8126871792, 0.8204449288,
+          0.8279494035, 0.8352032301, 0.8422095129, 0.848971789, 0.8554939853,
+          0.8617803756, 0.8678355404, 0.8736643264, 0.8792718095, 0.8846632585,
+          0.8898441015, 0.8948198934, 0.8995962867, 0.9041790035, 0.9085738096,
+          0.9127864914, 0.9168228338, 0.9206886011, 0.924389519, 0.9279312586,
+          0.9313194226, 0.9345595324, 0.9376570175, 0.9406172057, 0.9434453149,
+          0.9461464467, 0.9487255801, 0.951187567, 0.9535371289, 0.9557788536,
+          0.9579171938, 0.9599564653, 0.961900847, 0.9637543808, 0.965520972,
+          0.9672043905, 0.9688082723, 0.9703361214, 0.9717913116, 0.9731770894,
+          0.9744965762, 0.9757527713, 0.976948555, 0.9780866915, 0.979169832,
+          0.9802005183, 0.981181186, 0.9821141675, 0.9830016959, 0.9838459079,
+          0.9846488472, 0.9854124683, 0.9861386388, 0.9868291435, 0.9874856872,
+          0.9881098978, 0.988703329, 0.989267464, 0.9898037176, 0.9903134396,
+          0.990797917, 0.9912583769, 0.9916959891, 0.9921118685, 0.9925070773,
+          0.9928826275, 0.9932394831, 0.9935785621, 0.9939007388, 0.9942068455,
+          0.9944976745, 0.99477398, 0.9950364797, 0.9952858567, 0.995522761,
+          0.9957478107, 0.9959615941, 0.9961646707, 0.9963575727, 0.9965408062,
+          0.9967148524, 0.9968801691, 0.9970371914, 0.9971863329, 0.9973279872,
+        ];
+        const fullFpr = [
+          0.0, 0.0, 0.0, 0.0357142857, 0.0357142857, 0.0714285714, 0.0714285714,
+          0.1071428571, 0.1071428571, 0.2142857143, 0.2142857143, 1.0,
+        ];
+        const fullTpr = [
+          0.0, 0.0454545455, 0.7727272727, 0.7727272727, 0.8636363636,
+          0.8636363636, 0.9090909091, 0.9090909091, 0.9545454545, 0.9545454545,
+          1.0, 1.0,
+        ];
+        const rocAuc = 0.978896103896;
+
+        const visitedThresholds = [];
+        const visitedFpr = [];
+        const visitedTpr = [];
+
+        const el = {
+          table: document.getElementById("lt_data_table"),
+          slider: document.getElementById("lt_threshold"),
+          sliderLbl: document.getElementById("lt_threshold_lbl"),
+          metrics: document.getElementById("lt_metrics_box"),
+          fullBtn: document.getElementById("lt_full_roc_btn"),
+          curveDiv: "lt_curve_plot",
+          cmDiv: "lt_cm_plot",
+          rocDiv: "lt_roc_points_plot",
+          fullRocDiv: "lt_full_roc_plot",
+        };
+
+        function confusionAt(threshold) {
+          const pred = predProb.map((p) => (p >= threshold ? 1 : 0));
+          let tn = 0,
+            fp = 0,
+            fn = 0,
+            tp = 0;
+
+          for (let i = 0; i < clicks.length; i++) {
+            if (clicks[i] === 0 && pred[i] === 0) tn++;
+            else if (clicks[i] === 0 && pred[i] === 1) fp++;
+            else if (clicks[i] === 1 && pred[i] === 0) fn++;
+            else if (clicks[i] === 1 && pred[i] === 1) tp++;
+          }
+
+          const sensitivity = tp + fn > 0 ? tp / (tp + fn) : 0.0;
+          const specificity = tn + fp > 0 ? tn / (tn + fp) : 0.0;
+          const falsePositiveRate = fp + tn > 0 ? fp / (fp + tn) : 0.0;
+          const accuracy = (tp + tn) / clicks.length;
+
+          const precision0 = tn + fn > 0 ? tn / (tn + fn) : 0.0;
+          const recall0 = tn + fp > 0 ? tn / (tn + fp) : 0.0;
+          const f10 =
+            precision0 + recall0 > 0
+              ? (2 * precision0 * recall0) / (precision0 + recall0)
+              : 0.0;
+
+          const precision1 = tp + fp > 0 ? tp / (tp + fp) : 0.0;
+          const recall1 = tp + fn > 0 ? tp / (tp + fn) : 0.0;
+          const f11 =
+            precision1 + recall1 > 0
+              ? (2 * precision1 * recall1) / (precision1 + recall1)
+              : 0.0;
+
+          return {
+            pred,
+            tn,
+            fp,
+            fn,
+            tp,
+            sensitivity,
+            specificity,
+            falsePositiveRate,
+            accuracy,
+            precision0,
+            recall0,
+            f10,
+            precision1,
+            recall1,
+            f11,
+          };
+        }
+
+        function renderTable() {
+          let html =
+            '<table style="border-collapse:collapse; width:100%; font-size:14px;">';
+          html +=
+            "<thead><tr>" +
+            '<th style="border:1px solid #d1d5db; padding:6px 10px; text-align:center; background:#f3f4f6;">Ad Spend</th>' +
+            '<th style="border:1px solid #d1d5db; padding:6px 10px; text-align:center; background:#f3f4f6;">Actual Click</th>' +
+            '<th style="border:1px solid #d1d5db; padding:6px 10px; text-align:center; background:#f3f4f6;">Predicted Probability</th>' +
+            "</tr></thead><tbody>";
+
+          for (let i = 0; i < adSpend.length; i++) {
+            html +=
+              `<tr>` +
+              `<td style="border:1px solid #d1d5db; padding:6px 10px; text-align:center;">${adSpend[i].toFixed(2)}</td>` +
+              `<td style="border:1px solid #d1d5db; padding:6px 10px; text-align:center;">${clicks[i]}</td>` +
+              `<td style="border:1px solid #d1d5db; padding:6px 10px; text-align:center;">${predProb[i].toFixed(3)}</td>` +
+              `</tr>`;
+          }
+
+          html += "</tbody></table>";
+          el.table.innerHTML = html;
+        }
+
+        function renderMetrics(c) {
+          const support0 = c.tn + c.fp;
+          const support1 = c.tp + c.fn;
+
+          el.metrics.innerHTML =
+            `<div>` +
+            `<span class="pill">TN = ${c.tn}</span>` +
+            `<span class="pill">FP = ${c.fp}</span>` +
+            `<span class="pill">FN = ${c.fn}</span>` +
+            `<span class="pill">TP = ${c.tp}</span>` +
+            `</div>` +
+            `<div style="margin-top:10px;">` +
+            `<span class="pill">Accuracy = ${c.accuracy.toFixed(3)}</span>` +
+            `<span class="pill">Sensitivity (TPR) = ${c.sensitivity.toFixed(3)}</span>` +
+            `<span class="pill">Specificity (TNR) = ${c.specificity.toFixed(3)}</span>` +
+            `<span class="pill">False Positive Rate (FPR) = ${c.falsePositiveRate.toFixed(3)}</span>` +
+            `</div>` +
+            `<pre style="font-size:14px; line-height:1.35; background:#fff; border:1px solid var(--border); border-radius:10px; padding:12px; overflow:auto; margin-top:12px;">` +
+            `Classification Report\n\n` +
+            `              precision    recall  f1-score   support\n` +
+            `0             ${c.precision0.toFixed(3).padStart(7)} ${c.recall0.toFixed(3).padStart(9)} ${c.f10.toFixed(3).padStart(9)} ${String(support0).padStart(9)}\n` +
+            `1             ${c.precision1.toFixed(3).padStart(7)} ${c.recall1.toFixed(3).padStart(9)} ${c.f11.toFixed(3).padStart(9)} ${String(support1).padStart(9)}\n\n` +
+            `accuracy                          ${c.accuracy.toFixed(3).padStart(9)} ${String(clicks.length).padStart(9)}` +
+            `</pre>`;
+        }
+
+        function render() {
+          const threshold = parseFloat(el.slider.value);
+          const c = confusionAt(threshold);
+          const roundedThreshold = Number(threshold.toFixed(2));
+
+          el.sliderLbl.textContent = `Threshold: ${threshold.toFixed(2)}`;
+
+          if (!visitedThresholds.includes(roundedThreshold)) {
+            visitedThresholds.push(roundedThreshold);
+            visitedFpr.push(c.falsePositiveRate);
+            visitedTpr.push(c.sensitivity);
+          }
+
+          const xMin = Math.min(...adSpend);
+          const xMax = Math.max(...adSpend);
+
+          const curveTraces = [
+            {
+              type: "scatter",
+              mode: "lines",
+              x: xGrid,
+              y: probGrid,
+              name: "Logistic regression curve",
+              line: { width: 1.5, color: "grey" },
+            },
+            {
+              type: "scatter",
+              mode: "lines",
+              x: [xMin - 3, xMax + 3],
+              y: [threshold, threshold],
+              name: `Threshold = ${threshold.toFixed(2)}`,
+              line: { width: 3, color: "yellow", dash: "dash" },
+            },
+          ];
+
+          const groups = {
+            TP: { x: [], y: [], lineX: [], lineY: [], color: "#1f77b4" },
+            TN: { x: [], y: [], lineX: [], lineY: [], color: "#ff7f0e" },
+            FP: { x: [], y: [], lineX: [], lineY: [], color: "#2ca02c" },
+            FN: { x: [], y: [], lineX: [], lineY: [], color: "#d62728" },
+          };
+
+          for (let i = 0; i < adSpend.length; i++) {
+            let groupName;
+
+            if (clicks[i] === 1 && c.pred[i] === 1) {
+              groupName = "TP";
+            } else if (clicks[i] === 0 && c.pred[i] === 0) {
+              groupName = "TN";
+            } else if (clicks[i] === 0 && c.pred[i] === 1) {
+              groupName = "FP";
+            } else {
+              groupName = "FN";
+            }
+
+            groups[groupName].x.push(adSpend[i]);
+            groups[groupName].y.push(clicks[i]);
+
+            groups[groupName].lineX.push(adSpend[i], adSpend[i], null);
+            groups[groupName].lineY.push(clicks[i], predProb[i], null);
+          }
+
+          for (const groupName of ["TP", "TN", "FP", "FN"]) {
+            curveTraces.push({
+              type: "scatter",
+              mode: "lines",
+              x: groups[groupName].lineX,
+              y: groups[groupName].lineY,
+              name: `${groupName} vertical lines`,
+              showlegend: false,
+              hoverinfo: "skip",
+              line: {
+                width: 1.5,
+                dash: "dash",
+                color: groups[groupName].color,
+              },
+              opacity: 0.7,
+            });
+
+            curveTraces.push({
+              type: "scatter",
+              mode: "markers",
+              x: groups[groupName].x,
+              y: groups[groupName].y,
+              name: groupName,
+              marker: {
+                size: 8,
+                color: groups[groupName].color,
+              },
+            });
+          }
+
+          curveTraces.push({
+            type: "scatter",
+            mode: "markers",
+            x: adSpend,
+            y: predProb,
+            name: "Predicted probabilities",
+            marker: { size: 7, opacity: 0.75 },
+          });
+
+          safePlotlyNew(el.curveDiv, curveTraces, {
+            margin: { l: 70, r: 20, t: 55, b: 55 },
+            title: {
+              text: "Logistic Curve, Observed Labels, and Predicted Probabilities",
+              x: 0.02,
+            },
+            xaxis: {
+              title: "Ad Spend",
+              range: [xMin - 3, xMax + 3],
+              fixedrange: true,
+            },
+            yaxis: {
+              title: "Click / Predicted Probability",
+              range: [-0.08, 1.08],
+              tickvals: [0, 1],
+              fixedrange: true,
+            },
+            legend: { orientation: "v" },
+          });
+
+          safePlotlyNew(
+            el.cmDiv,
+            [
+              {
+                type: "heatmap",
+                z: [
+                  [c.tn, c.fp],
+                  [c.fn, c.tp],
+                ],
+                x: ["Pred 0", "Pred 1"],
+                y: ["Actual 0", "Actual 1"],
+                showscale: false,
+                text: [
+                  [c.tn, c.fp],
+                  [c.fn, c.tp],
+                ],
+                texttemplate: "%{text}",
+                textfont: { size: 28, color: "#111827" },
+                hoverinfo: "skip",
+                colorscale: "Pastel",
+              },
+            ],
+            {
+              margin: { l: 90, r: 20, t: 55, b: 55 },
+              title: { text: "Confusion Matrix", x: 0.02 },
+              xaxis: { fixedrange: true },
+              yaxis: { fixedrange: true, autorange: "reversed" },
+            },
+          );
+
+          renderMetrics(c);
+
+          safePlotlyNew(
+            el.rocDiv,
+            [
+              {
+                type: "scatter",
+                mode: "lines",
+                x: [0, 1],
+                y: [0, 1],
+                name: "Random classifier",
+                line: { width: 2, dash: "dash" },
+              },
+              {
+                type: "scatter",
+                mode: "markers",
+                x: visitedFpr,
+                y: visitedTpr,
+                name: "Visited threshold points",
+                marker: { size: 10 },
+              },
+              {
+                type: "scatter",
+                mode: "markers",
+                x: [c.falsePositiveRate],
+                y: [c.sensitivity],
+                name: `Current threshold = ${threshold.toFixed(2)}`,
+                marker: { size: 16, symbol: "star" },
+              },
+            ],
+            {
+              margin: { l: 70, r: 20, t: 55, b: 55 },
+              title: { text: "ROC Points Added Progressively", x: 0.02 },
+              xaxis: {
+                title: "False Positive Rate",
+                range: [-0.02, 1.02],
+                fixedrange: true,
+              },
+              yaxis: {
+                title: "True Positive Rate",
+                range: [-0.02, 1.02],
+                fixedrange: true,
+              },
+              legend: { orientation: "v" },
+            },
+          );
+        }
+
+        function showFullRoc() {
+          safePlotlyNew(
+            el.fullRocDiv,
+            [
+              {
+                type: "scatter",
+                mode: "lines",
+                x: [0, 1],
+                y: [0, 1],
+                name: "Random classifier",
+                line: { width: 2, dash: "dash" },
+              },
+              {
+                type: "scatter",
+                mode: "lines+markers",
+                x: fullFpr,
+                y: fullTpr,
+                name: "Full ROC curve",
+                line: { width: 1.5 },
+                marker: { size: 7 },
+              },
+            ],
+            {
+              margin: { l: 70, r: 20, t: 55, b: 55 },
+              title: {
+                text: `Full ROC Curve (AUC = ${rocAuc.toFixed(3)})`,
+                x: 0.02,
+              },
+              xaxis: {
+                title: "False Positive Rate",
+                range: [-0.02, 1.02],
+                fixedrange: true,
+              },
+              yaxis: {
+                title: "True Positive Rate",
+                range: [-0.02, 1.02],
+                fixedrange: true,
+              },
+              legend: { orientation: "v" },
+            },
+          );
+        }
+
+        renderTable();
+        el.slider.addEventListener("input", render);
+        el.fullBtn.addEventListener("click", showFullRoc);
+        render();
+      })();
+
+      /* =========================
+   App 6: Sigmoid Function Explorer
+========================= */
+      (function () {
+        const el = {
+          xmin: document.getElementById("sg_x_min"),
+          xmax: document.getElementById("sg_x_max"),
+          xval: document.getElementById("sg_x_value"),
+          rangeLbl: document.getElementById("sg_range_lbl"),
+          calc: document.getElementById("sg_calc_html"),
+          plotDiv: "sg_plot",
+        };
+
+        function sigmoid(z) {
+          if (z >= 0) {
+            const ez = Math.exp(-z);
+            return 1 / (1 + ez);
+          }
+          const ez = Math.exp(z);
+          return ez / (1 + ez);
+        }
+
+        function render() {
+          let xmin = parseFloat(el.xmin.value);
+          let xmax = parseFloat(el.xmax.value);
+          if (xmin >= xmax) {
+            if (document.activeElement === el.xmin) {
+              xmax = xmin + 0.5;
+              el.xmax.value = String(xmax);
+            } else {
+              xmin = xmax - 0.5;
+              el.xmin.value = String(xmin);
+            }
+          }
+
+          const xVal = parseFloat(el.xval.value);
+          const yVal = sigmoid(xVal);
+          el.rangeLbl.textContent = `x range: [${xmin.toFixed(1)}, ${xmax.toFixed(1)}]`;
+          el.calc.innerHTML = `<b>Calculator result:</b><br>For x = ${xVal.toFixed(4)}, &nbsp; σ(x) = 1 / (1 + e<sup>-x</sup>) = <b>${yVal.toFixed(6)}</b>`;
+
+          const xs = [];
+          const ys = [];
+          const n = 500;
+          for (let i = 0; i < n; i++) {
+            const x = xmin + (xmax - xmin) * (i / (n - 1));
+            xs.push(x);
+            ys.push(sigmoid(x));
+          }
+
+          safePlotlyNew(
+            el.plotDiv,
+            [
+              {
+                type: "scatter",
+                mode: "lines",
+                x: xs,
+                y: ys,
+                name: "σ(x) = 1 / (1 + e^(-x))",
+                line: { width: 1 },
+              },
+              {
+                type: "scatter",
+                mode: "markers",
+                x: [xVal],
+                y: [yVal],
+                name: `σ(${xVal.toFixed(2)}) = ${yVal.toFixed(4)}`,
+                marker: { size: 12, line: { width: 1, color: "#111827" } },
+              },
+              {
+                type: "scatter",
+                mode: "lines",
+                x: [xmin, xmax],
+                y: [0.5, 0.5],
+                name: "0.5 reference",
+                line: { width: 1, dash: "dash" },
+              },
+              {
+                type: "scatter",
+                mode: "lines",
+                x: [0, 0],
+                y: [-0.05, 1.05],
+                name: "x = 0",
+                line: { width: 1, dash: "dash" },
+              },
+            ],
+            {
+              margin: { l: 60, r: 20, t: 50, b: 50 },
+              title: {
+                text: "Sigmoid Curve: σ(x) = 1 / (1 + e^(-x))",
+                x: 0.02,
+              },
+              xaxis: { title: "x", range: [xmin, xmax], fixedrange: true },
+              yaxis: { title: "σ(x)", range: [-0.05, 1.05], fixedrange: true },
+              legend: { orientation: "v" },
+            },
+          );
+        }
+
+        el.xmin.addEventListener("input", render);
+        el.xmax.addEventListener("input", render);
+        el.xval.addEventListener("input", render);
+        render();
+      })();
+
+      /* =========================
+   App 7: Interactive Neural Network Visualization
+========================= */
+      (function () {
+        const adX = [
+          0.0, 0.022727272727272728, 0.045454545454545456, 0.06818181818181818,
+          0.09090909090909091, 0.11363636363636365, 0.13636363636363635,
+          0.1590909090909091, 0.18181818181818182, 0.20454545454545456,
+          0.2272727272727273, 0.25, 0.2727272727272727, 0.29545454545454547,
+          0.3181818181818182, 0.34090909090909094, 0.36363636363636365,
+          0.38636363636363635, 0.4090909090909091, 0.4318181818181818,
+          0.4545454545454546, 0.4772727272727273, 0.5, 0.5227272727272727,
+          0.5454545454545454, 0.5681818181818182, 0.5909090909090909,
+          0.6136363636363636, 0.6363636363636364, 0.6590909090909091,
+          0.6818181818181819, 0.7045454545454546, 0.7272727272727273, 0.75,
+          0.7727272727272727, 0.7954545454545455, 0.8181818181818182,
+          0.8409090909090909, 0.8636363636363636, 0.8863636363636364,
+          0.9090909090909092, 0.9318181818181819, 0.9545454545454546,
+          0.9772727272727273, 1.0,
+        ];
+        const adY = [
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1,
+          1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        ];
+        const xGrid = Array.from({ length: 400 }, (_, i) => i / 399);
+        const xHidden = Array.from({ length: 45 }, (_, i) => i / 44);
+
+        const el = {
+          W1: document.getElementById("nn_W1"),
+          b1: document.getElementById("nn_b1"),
+          W2: document.getElementById("nn_W2"),
+          b2: document.getElementById("nn_b2"),
+          W3: document.getElementById("nn_W3"),
+          W4: document.getElementById("nn_W4"),
+          b3: document.getElementById("nn_b3"),
+          showThreshold: document.getElementById("nn_show_threshold"),
+          arch: document.getElementById("nn_arch"),
+          equations: document.getElementById("nn_equations"),
+        };
+
+        const labels = {
+          W1: document.getElementById("nn_W1_lbl"),
+          b1: document.getElementById("nn_b1_lbl"),
+          W2: document.getElementById("nn_W2_lbl"),
+          b2: document.getElementById("nn_b2_lbl"),
+          W3: document.getElementById("nn_W3_lbl"),
+          W4: document.getElementById("nn_W4_lbl"),
+          b3: document.getElementById("nn_b3_lbl"),
+        };
+
+        function sigmoid(z) {
+          if (z >= 0) {
+            const ez = Math.exp(-z);
+            return 1 / (1 + ez);
+          }
+          const ez = Math.exp(z);
+          return ez / (1 + ez);
+        }
+
+        function vals() {
+          return {
+            W1: parseFloat(el.W1.value),
+            b1: parseFloat(el.b1.value),
+            W2: parseFloat(el.W2.value),
+            b2: parseFloat(el.b2.value),
+            W3: parseFloat(el.W3.value),
+            W4: parseFloat(el.W4.value),
+            b3: parseFloat(el.b3.value),
+          };
+        }
+
+        function compute(x, p) {
+          const z1 = p.W1 * x + p.b1;
+          const z2 = p.W2 * x + p.b2;
+          const h1 = sigmoid(z1);
+          const h2 = sigmoid(z2);
+          const s1 = p.W3 * h1;
+          const s2 = p.W4 * h2;
+          const sum = s1 + s2;
+          const sumBias = sum + p.b3;
+          const out = sigmoid(sumBias);
+          return { z1, z2, h1, h2, s1, s2, sum, sumBias, out };
+        }
+
+        function shortLine(x1, y1, x2, y2, r = 46) {
+          const dx = x2 - x1,
+            dy = y2 - y1;
+          const d = Math.sqrt(dx * dx + dy * dy) || 1;
+          return {
+            x1: x1 + (r * dx) / d,
+            y1: y1 + (r * dy) / d,
+            x2: x2 - (r * dx) / d,
+            y2: y2 - (r * dy) / d,
+          };
+        }
+
+        function drawArchitecture(p) {
+          const input = { x: 110, y: 240 };
+          const h1 = { x: 380, y: 135 };
+          const h2 = { x: 380, y: 345 };
+          const out = { x: 650, y: 240 };
+          const conns = [
+            [input, h1, `W1 = ${p.W1.toFixed(2)}\nb1 = ${p.b1.toFixed(2)}`],
+            [input, h2, `W2 = ${p.W2.toFixed(2)}\nb2 = ${p.b2.toFixed(2)}`],
+            [h1, out, `W3 = ${p.W3.toFixed(2)}`],
+            [h2, out, `W4 = ${p.W4.toFixed(2)}`],
+          ];
+          let svg = `<svg viewBox="0 0 760 480" width="100%" height="480" role="img" aria-label="Neural Network Architecture">`;
+          svg += `<defs><marker id="nnArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#111827"></path></marker></defs>`;
+          svg += `<text x="380" y="36" text-anchor="middle" font-size="20" font-weight="800">Neural Network Architecture</text>`;
+          for (const [a, b, label] of conns) {
+            const s = shortLine(a.x, a.y, b.x, b.y, 54);
+            svg += `<line x1="${s.x1}" y1="${s.y1}" x2="${s.x2}" y2="${s.y2}" stroke="#111827" stroke-width="2.4" marker-end="url(#nnArrow)"></line>`;
+            const mx = (s.x1 + s.x2) / 2,
+              my = (s.y1 + s.y2) / 2 - 16;
+            const parts = label.split("\n");
+            svg += `<rect x="${mx - 55}" y="${my - 24}" width="110" height="${parts.length * 18 + 10}" rx="8" fill="#ffffff" opacity="0.88"></rect>`;
+            parts.forEach((t, i) => {
+              svg += `<text x="${mx}" y="${my + i * 18}" text-anchor="middle" font-size="13" font-weight="700">${t}</text>`;
+            });
+          }
+          const nodes = [
+            [input, "Ad", "Frequency", "x"],
+            [h1, "Hidden 1", "sigmoid", ""],
+            [h2, "Hidden 2", "sigmoid", ""],
+            [out, "Output", "ŷ", ""],
+          ];
+          for (const [pt, a, b, c] of nodes) {
+            svg += `<circle cx="${pt.x}" cy="${pt.y}" r="50" fill="#ffffff" stroke="#111827" stroke-width="2.4"></circle>`;
+            svg += `<text x="${pt.x}" y="${pt.y - 10}" text-anchor="middle" font-size="14" font-weight="700">${a}</text>`;
+            svg += `<text x="${pt.x}" y="${pt.y + 8}" text-anchor="middle" font-size="14">${b}</text>`;
+            if (c)
+              svg += `<text x="${pt.x}" y="${pt.y + 26}" text-anchor="middle" font-size="14">${c}</text>`;
+          }
+          svg += `<text x="650" y="346" text-anchor="middle" font-size="14">Output bias: b3 = ${p.b3.toFixed(2)}</text>`;
+          svg += `</svg>`;
+          el.arch.innerHTML = svg;
+        }
+
+        function plot(divId, traces, title, yTitle, yRange = null) {
+          safePlotlyNew(divId, traces, {
+            margin: { l: 60, r: 20, t: 50, b: 50 },
+            title: { text: title, x: 0.02 },
+            xaxis: {
+              title: "Ad Frequency (x)",
+              range: [-0.03, 1.03],
+              fixedrange: true,
+            },
+            yaxis: {
+              title: yTitle,
+              range: yRange || undefined,
+              fixedrange: true,
+            },
+            legend: { font: { size: 10 } },
+          });
+        }
+
+        function render() {
+          const p = vals();
+          for (const k of Object.keys(labels))
+            labels[k].textContent = `${k}: ${p[k].toFixed(2)}`;
+
+          drawArchitecture(p);
+
+          const yHat = xGrid.map((x) => compute(x, p).out);
+          const squiggleTraces = [
+            {
+              type: "scatter",
+              mode: "markers",
+              x: adX,
+              y: adY,
+              name: "Observed Data",
+              marker: { size: 6, opacity: 0.81 },
+            },
+            {
+              type: "scatter",
+              mode: "lines",
+              x: xGrid,
+              y: yHat,
+              name: "Neural Network Prediction",
+              line: { width: 1 },
+            },
+          ];
+          if (el.showThreshold.checked) {
+            squiggleTraces.push({
+              type: "scatter",
+              mode: "lines",
+              x: [-0.03, 1.03],
+              y: [0.5, 0.5],
+              name: "Classification Threshold = 0.5",
+              line: { width: 1, dash: "dash" },
+            });
+          }
+          safePlotlyNew("nn_squiggle_plot", squiggleTraces, {
+            margin: { l: 70, r: 20, t: 50, b: 55 },
+            title: { text: "Ad Frequency and Effectiveness", x: 0.02 },
+            xaxis: {
+              title: "Ad Frequency",
+              range: [-0.03, 1.03],
+              fixedrange: true,
+            },
+            yaxis: {
+              title: "Predicted Probability / Outcome",
+              range: [-0.05, 1.05],
+              fixedrange: true,
+              tickvals: [0, 0.5, 1],
+              ticktext: ["Ineffective", "0.5", "Effective"],
+            },
+            legend: { orientation: "v" },
+          });
+
+          const rows = xHidden.map((x) => compute(x, p));
+          const z1 = rows.map((r) => r.z1),
+            z2 = rows.map((r) => r.z2),
+            h1 = rows.map((r) => r.h1),
+            h2 = rows.map((r) => r.h2),
+            s1 = rows.map((r) => r.s1),
+            s2 = rows.map((r) => r.s2);
+          const zMin = Math.min(...z1, ...z2) - 1;
+          const zMax = Math.max(...z1, ...z2) + 1;
+          const yMin = Math.min(...h1, ...h2, ...s1, ...s2) - 0.5;
+          const yMax = Math.max(...h1, ...h2, ...s1, ...s2) + 0.5;
+
+          plot(
+            "nn_hz1",
+            [
+              {
+                type: "scatter",
+                mode: "lines+markers",
+                x: xHidden,
+                y: z1,
+                name: "z1",
+                marker: { size: 5, color: "#2ca02c" },
+                line: { width: 1, color: "#2ca02c" },
+              },
+            ],
+            `Top: z₁ = ${p.W1.toFixed(2)}x + ${p.b1.toFixed(2)}`,
+            "Value",
+            [zMin, zMax],
+          );
+          plot(
+            "nn_hh1",
+            [
+              {
+                type: "scatter",
+                mode: "lines+markers",
+                x: xHidden,
+                y: h1,
+                name: "h1",
+                marker: { size: 5, color: "#2ca02c" },
+                line: { width: 1, color: "#2ca02c" },
+              },
+            ],
+            "Top: h₁ = σ(z₁)",
+            "Value",
+            [yMin, yMax],
+          );
+          plot(
+            "nn_hs1",
+            [
+              {
+                type: "scatter",
+                mode: "lines+markers",
+                x: xHidden,
+                y: s1,
+                name: "W3h1",
+                marker: { size: 5, color: "#2ca02c" },
+                line: { width: 1, color: "#2ca02c" },
+              },
+            ],
+            `Top: W₃h₁ = ${p.W3.toFixed(2)}h₁`,
+            "Value",
+            [yMin, yMax],
+          );
+          plot(
+            "nn_hz2",
+            [
+              {
+                type: "scatter",
+                mode: "lines+markers",
+                x: xHidden,
+                y: z2,
+                name: "z2",
+                marker: { size: 5, color: "#ff7f0e" },
+                line: { width: 1, color: "#ff7f0e" },
+              },
+            ],
+            `Bottom: z₂ = ${p.W2.toFixed(2)}x + ${p.b2.toFixed(2)}`,
+            "Value",
+            [zMin, zMax],
+          );
+          plot(
+            "nn_hh2",
+            [
+              {
+                type: "scatter",
+                mode: "lines+markers",
+                x: xHidden,
+                y: h2,
+                name: "h2",
+                marker: { size: 5, color: "#ff7f0e" },
+                line: { width: 1, color: "#ff7f0e" },
+              },
+            ],
+            "Bottom: h₂ = σ(z₂)",
+            "Value",
+            [yMin, yMax],
+          );
+          plot(
+            "nn_hs2",
+            [
+              {
+                type: "scatter",
+                mode: "lines+markers",
+                x: xHidden,
+                y: s2,
+                name: "W4h2",
+                marker: { size: 5, color: "#ff7f0e" },
+                line: { width: 1, color: "#ff7f0e" },
+              },
+            ],
+            `Bottom: W₄h₂ = ${p.W4.toFixed(2)}h₂`,
+            "Value",
+            [yMin, yMax],
+          );
+
+          const sum = rows.map((r) => r.sum),
+            sumBias = rows.map((r) => r.sumBias),
+            out = rows.map((r) => r.out);
+          const rawMin = Math.min(...s1, ...s2, ...sum, ...sumBias) - 0.5;
+          const rawMax = Math.max(...s1, ...s2, ...sum, ...sumBias) + 0.5;
+
+          plot(
+            "nn_out_sum",
+            [
+              {
+                type: "scatter",
+                mode: "lines+markers",
+                x: xHidden,
+                y: s1,
+                name: `W₃h₁ = ${p.W3.toFixed(2)}h₁`,
+                marker: { size: 5, color: "#2ca02c" },
+                line: { width: 1, color: "#2ca02c" },
+              },
+              {
+                type: "scatter",
+                mode: "lines+markers",
+                x: xHidden,
+                y: s2,
+                name: `W₄h₂ = ${p.W4.toFixed(2)}h₂`,
+                marker: { size: 5, color: "#ff7f0e" },
+                line: { width: 1, color: "#ff7f0e" },
+              },
+              {
+                type: "scatter",
+                mode: "lines+markers",
+                x: xHidden,
+                y: sum,
+                name: "W₃h₁ + W₄h₂",
+                marker: { size: 5, color: "#1f77b4" },
+                line: { width: 1, color: "#1f77b4" },
+              },
+            ],
+            "Step 4: W₃h₁ + W₄h₂",
+            "Value",
+            [rawMin, rawMax],
+          );
+
+          plot(
+            "nn_out_bias",
+            [
+              {
+                type: "scatter",
+                mode: "lines+markers",
+                x: xHidden,
+                y: sum,
+                name: "W₃h₁ + W₄h₂",
+                marker: { size: 5, color: "#1f77b4" },
+                line: { width: 1, color: "#1f77b4" },
+              },
+              {
+                type: "scatter",
+                mode: "lines+markers",
+                x: xHidden,
+                y: sumBias,
+                name: "W₃h₁ + W₄h₂ + b₃",
+                marker: { size: 5, color: "#d62728" },
+                line: { width: 1, color: "#d62728" },
+              },
+            ],
+            `Step 5: Add Bias, b₃ = ${p.b3.toFixed(2)}`,
+            "Value",
+            [rawMin, rawMax],
+          );
+
+          plot(
+            "nn_out_final",
+            [
+              {
+                type: "scatter",
+                mode: "lines+markers",
+                x: xHidden,
+                y: out,
+                name: "ŷ",
+                marker: { size: 5, color: "#9467bd" },
+                line: { width: 1, color: "#9467bd" },
+              },
+            ],
+            "Step 6: ŷ = σ(W₃h₁ + W₄h₂ + b₃)",
+            "ŷ",
+            [rawMin, rawMax],
+          );
+
+          el.equations.innerHTML =
+            `<b>Equations:</b><br>` +
+            `\(h_1 = \sigma(${p.W1.toFixed(2)}x + ${p.b1.toFixed(2)})\)<br>` +
+            `\(h_2 = \sigma(${p.W2.toFixed(2)}x + ${p.b2.toFixed(2)})\)<br>` +
+            `\(W_3h_1 + W_4h_2 = (${p.W3.toFixed(2)})h_1 + (${p.W4.toFixed(2)})h_2\)<br>` +
+            `\(W_3h_1 + W_4h_2 + b_3 = (${p.W3.toFixed(2)})h_1 + (${p.W4.toFixed(2)})h_2 + (${p.b3.toFixed(2)})\)<br>` +
+            `\(\hat{y} = \sigma(W_3h_1 + W_4h_2 + b_3)\)`;
+
+          if (window.MathJax && window.MathJax.typesetPromise) {
+            window.MathJax.typesetPromise();
+          }
+        }
+
+        [
+          el.W1,
+          el.b1,
+          el.W2,
+          el.b2,
+          el.W3,
+          el.W4,
+          el.b3,
+          el.showThreshold,
+        ].forEach((control) => {
+          control.addEventListener("input", render);
+          control.addEventListener("change", render);
+        });
+
+        render();
+      })();
+    </script>
+  </body>
+</html>
