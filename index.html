@@ -3,7 +3,17 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Visualizing Machine Learning and Neural Network Concepts</title>
+    <title>Danish’s Machine Learning Visualization Apps</title>
+
+    <!--
+Third-party open-source libraries:
+- Plotly.js 2.35.2 — MIT License
+- math.js 11.11.2 — Apache License 2.0
+- MathJax 3 — Apache License 2.0
+
+These libraries are loaded from their respective CDNs and are subject
+to their respective copyright notices and license terms.
+-->
 
     <!-- Plotly (plots) -->
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
@@ -12,8 +22,6 @@
     <script src="https://cdn.jsdelivr.net/npm/mathjs@11.11.2/lib/browser/math.min.js"></script>
 
     <!-- MathJax (LaTeX in markdown cells) -->
-
-    <br />
 
     <script>
       window.MathJax = {
@@ -162,14 +170,42 @@
         margin-top: 18px;
       }
       .plotBox {
-        min-width: 520px;
+        flex: 1 1 520px;
+        min-width: 0;
       }
       .plotBoxSmall {
-        min-width: 520px;
+        flex: 1 1 520px;
+        min-width: 0;
+      }
+      .plotResponsive {
+        width: 100%;
+        height: 520px;
+      }
+
+      @media (max-width: 600px) {
+        .plotResponsive {
+          height: 360px;
+        }
+        #lt_curve_plot {
+          height: 520px !important;
+        }
+        #lt_cm_plot {
+          width: 100% !important;
+          min-width: 0 !important;
+        }
+        #lt_roc_points_plot {
+          width: 100% !important;
+          min-width: 0 !important;
+        }
+        #lt_full_roc_plot {
+          width: 100% !important;
+          min-width: 0 !important;
+        }
       }
       .controls {
-        width: 620px;
-        min-width: 320px;
+        width: 100%;
+        max-width: 620px;
+        min-width: 0;
       }
       .ctrlRow {
         display: flex;
@@ -227,9 +263,12 @@
   <body>
     <!-- ---- Notebook markdown (matched wording) ---- -->
     <div class="section">
-      <h1 style="font-size: 45px; margin-left: 0px">
-        Visualizing Machine Learning and Neural Network Concepts
+      <h1 style="font-size: 45px; margin-bottom: 8px">
+        Danish's Machine Learning Visualization Apps
       </h1>
+      <h2 style="font-size: 36px; margin-left: 0px">
+        Visualizing Machine Learning and Neural Network Concepts
+      </h2>
 
       <p style="font-size: 18px">
         Interactive visualizations of core machine learning concepts, including
@@ -401,7 +440,7 @@
           </div>
 
           <div class="plotBox">
-            <div id="hp_plot" style="width: 100%; height: 520px"></div>
+            <div id="hp_plot" class="plotResponsive"></div>
           </div>
         </div>
       </div>
@@ -1193,7 +1232,7 @@
 
           <div class="col plotBoxSmall" style="gap: 22px">
             <div class="card" style="box-shadow: none">
-              <div id="nn_arch" style="width: 100%; min-height: 480px"></div>
+              <div id="nn_arch" style="width: 100%"></div>
             </div>
             <div id="nn_squiggle_plot" style="width: 100%; height: 600px"></div>
           </div>
@@ -1382,6 +1421,12 @@
             materials, and other intellectual property associated with StatQuest
             remain the property of their respective owners.
           </p>
+          <p>
+            These interactive visualizations are intended for educational and
+            demonstration purposes only. They provide simplified illustrations
+            of machine-learning concepts and are not intended for production
+            modeling or professional decision-making.
+          </p>
         </div>
       </div>
     </div>
@@ -1442,6 +1487,25 @@
       }
 
       function safePlotlyNew(divId, data, layout, config) {
+        const isMobile = window.innerWidth <= 600;
+        if (isMobile && layout) {
+          layout = {
+            ...layout,
+            margin: {
+              ...(layout.margin || {}),
+              l: Math.max(layout.margin?.l || 0, 60),
+              r: 15,
+              t: 90,
+              b: 50,
+            },
+            legend: {
+              ...(layout.legend || {}),
+              orientation: "h",
+              x: 0,
+              y: 1.12,
+            },
+          };
+        }
         Plotly.react(
           divId,
           data,
@@ -1594,20 +1658,24 @@
               });
             }
           }
-
+          const isMobile = window.innerWidth <= 600;
           const layout = {
             margin: { l: 60, r: 20, t: 30, b: 50 },
             xaxis: {
               title: "House Size (sqft)",
+              automargin: true,
               range: X_RANGE,
               fixedrange: true,
             },
             yaxis: {
               title: "House Price ($)",
+              automargin: true,
               range: Y_RANGE,
               fixedrange: true,
             },
-            legend: { orientation: "v" },
+            legend: isMobile
+              ? { orientation: "h", x: 0, y: 1.15 }
+              : { orientation: "v" },
           };
 
           safePlotlyNew(el.plotDiv, traces, layout);
@@ -1915,7 +1983,7 @@
               showscale: false,
             });
           }
-
+          const isMobile3d = window.innerWidth <= 600;
           const layout3d = {
             margin: { l: 0, r: 0, t: 30, b: 0 },
             scene: {
@@ -1924,6 +1992,9 @@
               zaxis: { title: "House Price ($)", range: PRICE_RANGE },
             },
             title: { text: "3D Scatter + Regression Surface", x: 0.02 },
+            legend: isMobile3d
+              ? { orientation: "h", x: 0, y: 1.05 }
+              : { orientation: "v" },
           };
 
           safePlotlyNew(el.plot3d, traces3d, layout3d);
@@ -2042,7 +2113,9 @@
               range: PRICE_RANGE,
               fixedrange: true,
             },
-            legend: { orientation: "v" },
+            legend: isMobile3d
+              ? { orientation: "h", x: 0, y: 1.15 }
+              : { orientation: "v" },
           };
 
           safePlotlyNew(el.plot2d, traces2d, layout2d);
@@ -3019,6 +3092,7 @@
         }
 
         function render() {
+          const isMobileCurve = window.innerWidth <= 600;
           const threshold = parseFloat(el.slider.value);
           const c = confusionAt(threshold);
           const roundedThreshold = Number(threshold.toFixed(2));
@@ -3104,7 +3178,7 @@
               y: groups[groupName].y,
               name: groupName,
               marker: {
-                size: 8,
+                size: isMobileCurve ? 5 : 8,
                 color: groups[groupName].color,
               },
             });
@@ -3122,7 +3196,9 @@
           safePlotlyNew(el.curveDiv, curveTraces, {
             margin: { l: 70, r: 20, t: 55, b: 55 },
             title: {
-              text: "Logistic Curve, Observed Labels, and Predicted Probabilities",
+              text: isMobileCurve
+                ? "Logistic Curve & Predictions"
+                : "Logistic Curve, Observed Labels, and Predicted Probabilities",
               x: 0.02,
             },
             xaxis: {
@@ -3136,7 +3212,9 @@
               tickvals: [0, 1],
               fixedrange: true,
             },
-            legend: { orientation: "v" },
+            legend: isMobileCurve
+              ? { orientation: "h", x: 0, y: 1.25 }
+              : { orientation: "v" },
           });
 
           safePlotlyNew(
@@ -3162,7 +3240,12 @@
               },
             ],
             {
-              margin: { l: 90, r: 20, t: 55, b: 55 },
+              margin: {
+                l: isMobileCurve ? 70 : 90,
+                r: 20,
+                t: 55,
+                b: 55,
+              },
               title: { text: "Confusion Matrix", x: 0.02 },
               xaxis: { fixedrange: true },
               yaxis: { fixedrange: true, autorange: "reversed" },
@@ -3196,7 +3279,7 @@
                 x: [c.falsePositiveRate],
                 y: [c.sensitivity],
                 name: `Current threshold = ${threshold.toFixed(2)}`,
-                marker: { size: 16, symbol: "star" },
+                marker: { size: isMobileCurve ? 11 : 16, symbol: "star" },
               },
             ],
             {
@@ -3323,7 +3406,7 @@
                 mode: "lines",
                 x: xs,
                 y: ys,
-                name: "σ(x) = 1 / (1 + e^(-x))",
+                name: "σ(x) = 1 / (1 + e⁻ˣ)",
                 line: { width: 1 },
               },
               {
@@ -3354,7 +3437,10 @@
             {
               margin: { l: 60, r: 20, t: 50, b: 50 },
               title: {
-                text: "Sigmoid Curve: σ(x) = 1 / (1 + e^(-x))",
+                text:
+                  window.innerWidth <= 600
+                    ? "Sigmoid Curve"
+                    : "Sigmoid Curve: σ(x) = 1 / (1 + e^(-x))",
                 x: 0.02,
               },
               xaxis: { title: "x", range: [xmin, xmax], fixedrange: true },
@@ -3477,7 +3563,7 @@
             [h1, out, `W3 = ${p.W3.toFixed(2)}`],
             [h2, out, `W4 = ${p.W4.toFixed(2)}`],
           ];
-          let svg = `<svg viewBox="0 0 760 480" width="100%" height="480" role="img" aria-label="Neural Network Architecture">`;
+          let svg = `<svg viewBox="0 0 760 480" width="100%" height="auto" role="img" aria-label="Neural Network Architecture">`;
           svg += `<defs><marker id="nnArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#111827"></path></marker></defs>`;
           svg += `<text x="380" y="36" text-anchor="middle" font-size="20" font-weight="800">Neural Network Architecture</text>`;
           for (const [a, b, label] of conns) {
